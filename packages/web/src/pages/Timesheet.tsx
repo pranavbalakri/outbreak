@@ -191,15 +191,23 @@ function UnassignedRow({
     .flat()
     .reduce((s, e) => s + durationMinutes(e.startedAt, e.endedAt), 0);
   return (
-    <tr className="border-b border-ink-400 bg-amber-50/40">
+    <tr className="border-b border-ink-400 bg-amber-500/5">
       <td className="px-4 py-3">
         <div className="flex items-center gap-2">
           <Badge tone="yellow">Unassigned</Badge>
-          <span className="text-xs text-ink-200">attach to a project →</span>
+          <span className="text-xs text-ink-300">
+            expand a cell to attach
+          </span>
         </div>
       </td>
       {entries.map((dayEntries, i) => (
-        <DayCell key={i} entries={dayEntries} onAttach={onAttach} invalidate={invalidate} />
+        <DayCell
+          key={i}
+          entries={dayEntries}
+          onAttach={onAttach}
+          attachLabel="attach"
+          invalidate={invalidate}
+        />
       ))}
       <td className="px-2 text-right font-mono tabular-nums">{formatMinutes(totalRow)}</td>
     </tr>
