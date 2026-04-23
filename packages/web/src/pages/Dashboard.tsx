@@ -266,14 +266,14 @@ function EntryRow({
           {attaching && (
             <div className="mt-2 flex items-center gap-2">
               <Select
-                value=""
+                value={entry.projectId ?? ''}
                 onChange={(v) => void attach(v)}
                 placeholder="Choose a project…"
-                triggerWidth={240}
-                options={assignedProjects.map((p) => ({
-                  value: p.id,
-                  label: p.name,
-                }))}
+                triggerWidth={260}
+                options={[
+                  { value: '', label: 'No project (general time)' },
+                  ...assignedProjects.map((p) => ({ value: p.id, label: p.name })),
+                ]}
               />
               <Button variant="secondary" onClick={() => setAttaching(false)}>
                 Cancel
@@ -282,16 +282,16 @@ function EntryRow({
           )}
         </div>
         <div className="flex flex-shrink-0 items-center gap-2">
-          {!entry.projectId && !attaching && entry.endedAt && (
+          {!attaching && entry.endedAt && (
             <Button variant="secondary" onClick={() => setAttaching(true)}>
-              Attach to project
+              {entry.projectId ? 'Change project' : 'Attach to project'}
             </Button>
           )}
           {entry.endedAt && (
             <button
               type="button"
               onClick={() => void onDelete()}
-              className="text-xs text-ink-300 hover:text-red-600"
+              className="text-xs text-ink-300 transition-colors hover:text-red-400"
             >
               Delete
             </button>
