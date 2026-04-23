@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import ReactMarkdown from 'react-markdown';
 import type { ProjectDto } from '@outbreak/shared';
@@ -8,6 +8,7 @@ import {
   addProjectTag,
   createTag,
   createTask,
+  deleteProject,
   deleteTask,
   fetchProject,
   fetchTags,
@@ -29,7 +30,17 @@ export function ProjectDetailPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { start, active } = useTimer();
+
+  const deleteProjectM = useMutation({
+    mutationFn: (pid: string) => deleteProject(pid),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      navigate('/projects');
+    },
+    onError: (e: Error) => alert(e.message),
+  });
 
   const [tab, setTab] = useState<'tasks' | 'entries' | 'notes'>('tasks');
   const [editing, setEditing] = useState(false);
@@ -100,9 +111,26 @@ export function ProjectDetailPage() {
             ▶ Start timer
           </Button>
           {isAdmin && (
-            <Button variant="secondary" onClick={() => setEditing(true)}>
-              Edit
-            </Button>
+            <>
+              <Button variant="secondary" onClick={() => setEditing(true)}>
+                Edit
+              </Button>
+              <Button
+                variant="danger"
+                disabled={deleteProjectM.isPending}
+                onClick={() => {
+                  if (
+                    confirm(
+                      `Delete "${project.name}"? This hides it from all views but preserves time entries already logged against it.`,
+                    )
+                  ) {
+                    deleteProjectM.mutate(project.id);
+                  }
+                }}
+              >
+                {deleteProjectM.isPending ? 'Deleting…' : 'Delete'}
+              </Button>
+            </>
           )}
         </div>
       </div>
