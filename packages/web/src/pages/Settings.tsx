@@ -5,13 +5,10 @@ import { useAuth } from '../auth/AuthContext.js';
 import { apiOrigin } from '../api/client.js';
 import { useConfirm } from '../components/Confirm.js';
 import {
-  createFolder,
   createTag,
-  deleteFolder,
   deleteTag,
   fetchApiTokens,
   fetchFeedback,
-  fetchFolders,
   fetchTags,
   fetchUsageSummary,
   fetchWeeks,
@@ -19,11 +16,9 @@ import {
   resolveFeedback,
   revokeApiToken,
   unlockWeek,
-  updateFolder,
 } from '../api/queries.js';
 
 type TabId =
-  | 'folders'
   | 'tags'
   | 'weeks'
   | 'devices'
@@ -33,7 +28,6 @@ type TabId =
   | 'profile';
 
 const TAB_LABELS: Record<TabId, string> = {
-  folders: 'Folders',
   tags: 'Tags',
   weeks: 'Week Locks',
   devices: 'Connected Devices',
@@ -47,7 +41,7 @@ export function SettingsPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
   const tabs: TabId[] = isAdmin
-    ? ['folders', 'tags', 'weeks', 'devices', 'data', 'feedback', 'usage', 'profile']
+    ? ['tags', 'weeks', 'devices', 'data', 'feedback', 'usage', 'profile']
     : ['devices', 'profile'];
   const [tab, setTab] = useState<TabId>(tabs[0]!);
 
@@ -70,7 +64,6 @@ export function SettingsPage() {
         ))}
       </div>
 
-      {tab === 'folders' && <FoldersTab />}
       {tab === 'tags' && <TagsTab />}
       {tab === 'weeks' && <WeeksTab />}
       {tab === 'devices' && <DevicesTab />}
@@ -215,241 +208,6 @@ function UsageTab() {
   );
 }
 
-function FoldersTab() {
-  const qc = useQueryClient();
-  const confirm = useConfirm();
-  const foldersQ = useQuery({ queryKey: ['folders'], queryFn: fetchFolders });
-  // null = closed; { id: null } = creating; { id: '…' } = editing that folder
-  const [sheet, setSheet] = useState<
-    | null
-    | {
-        id: string | null;
-        name: string;
-        color: string;
-        parentFolderId: string | null;
-      }
-  >(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const createM = useMutation({
-    mutationFn: () =>
-      createFolder({
-        name: sheet!.name,
-        color: sheet!.color,
-        parentFolderId: sheet!.parentFolderId,
-      }),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['folders'] });
-      setSheet(null);
-      setError(null);
-    },
-    onError: (e: Error) => setError(e.message),
-  });
-
-  const editM = useMutation({
-    mutationFn: () =>
-      updateFolder(sheet!.id!, {
-        name: sheet!.name,
-        color: sheet!.color,
-        parentFolderId: sheet!.parentFolderId,
-      }),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['folders'] });
-      setSheet(null);
-      setError(null);
-    },
-    onError: (e: Error) => setError(e.message),
-  });
-
-  const archiveM = useMutation({
-    mutationFn: ({ id, archived }: { id: string; archived: boolean }) =>
-      updateFolder(id, { archived }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['folders'] }),
-  });
-  const deleteM = useMutation({
-    mutationFn: (id: string) => deleteFolder(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['folders'] }),
-    onError: (e: Error) => alert(e.message),
-  });
-
-  const isEditing = sheet?.id !== null && sheet?.id !== undefined;
-  const pending = createM.isPending || editM.isPending;
-
-  return (
-    <Card className="p-4">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-ink-100">Folders</h2>
-        <Button
-          onClick={() =>
-            setSheet({ id: null, name: '', color: '#1a73ff', parentFolderId: null })
-          }
-        >
-          New folder
-        </Button>
-      </div>
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-ink-400 text-left text-xs uppercase text-ink-200">
-            <th className="py-2">Name</th>
-            <th className="py-2">Parent</th>
-            <th className="py-2">Color</th>
-            <th className="py-2">Status</th>
-            <th className="py-2"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {foldersQ.data?.folders.map((f) => {
-            const parentName = f.parentFolderId
-              ? foldersQ.data?.folders.find((p) => p.id === f.parentFolderId)?.name
-              : null;
-            return (
-            <tr key={f.id} className="border-b border-ink-500 last:border-none">
-              <td className="py-2">{f.name}</td>
-              <td className="py-2 text-ink-200">{parentName ?? '—'}</td>
-              <td className="py-2">
-                {f.color && (
-                  <span
-                    className="inline-block h-4 w-4 rounded-sm align-middle"
-                    style={{ backgroundColor: f.color }}
-                  />
-                )}{' '}
-                <code className="text-xs text-ink-200">{f.color ?? '—'}</code>
-              </td>
-              <td className="py-2">
-                {f.archivedAt ? <Badge tone="slate">Archived</Badge> : <Badge tone="green">Active</Badge>}
-              </td>
-              <td className="py-2 text-right">
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="secondary"
-                    onClick={() =>
-                      setSheet({
-                        id: f.id,
-                        name: f.name,
-                        color: f.color ?? '#1a73ff',
-                        parentFolderId: f.parentFolderId,
-                      })
-                    }
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    onClick={() =>
-                      archiveM.mutate({ id: f.id, archived: !f.archivedAt })
-                    }
-                  >
-                    {f.archivedAt ? 'Unarchive' : 'Archive'}
-                  </Button>
-                  <Button
-                    variant="danger"
-                    onClick={async () => {
-                      const ok = await confirm({
-                        title: 'Delete folder',
-                        message: (
-                          <>
-                            Delete <span className="text-ink-100">“{f.name}”</span>? Folders
-                            that still contain projects can&apos;t be deleted — remove or
-                            reassign them first.
-                          </>
-                        ),
-                        confirmLabel: 'Delete',
-                        danger: true,
-                      });
-                      if (ok) deleteM.mutate(f.id);
-                    }}
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </td>
-            </tr>
-            );
-          })}
-        </tbody>
-      </table>
-
-      <Modal
-        open={sheet !== null}
-        onClose={() => {
-          setSheet(null);
-          setError(null);
-        }}
-        title={isEditing ? 'Edit folder' : 'New folder'}
-      >
-        <div className="space-y-3">
-          <Field label="Name">
-            <input
-              className={inputClass}
-              value={sheet?.name ?? ''}
-              onChange={(e) =>
-                setSheet((s) => (s ? { ...s, name: e.target.value } : s))
-              }
-              autoFocus
-            />
-          </Field>
-          <Field
-            label="Parent folder"
-            {...(sheet?.id
-              ? { hint: "Can't be set to this folder or one of its descendants." }
-              : {})}
-          >
-            <Select
-              value={sheet?.parentFolderId ?? ''}
-              onChange={(v) =>
-                setSheet((s) => (s ? { ...s, parentFolderId: v || null } : s))
-              }
-              placeholder="No parent (top level)"
-              options={[
-                { value: '', label: 'No parent (top level)' },
-                ...(foldersQ.data?.folders ?? [])
-                  .filter((f) => !f.archivedAt && f.id !== sheet?.id)
-                  .map((f) => ({ value: f.id, label: f.name })),
-              ]}
-            />
-          </Field>
-          <Field label="Color">
-            <div className="flex items-center gap-3">
-              <input
-                type="color"
-                className="h-9 w-12 cursor-pointer rounded border border-ink-400 bg-ink-900"
-                value={sheet?.color ?? '#1a73ff'}
-                onChange={(e) =>
-                  setSheet((s) => (s ? { ...s, color: e.target.value } : s))
-                }
-              />
-              <code className="text-xs text-ink-200">{sheet?.color}</code>
-            </div>
-          </Field>
-          {error && <div className="text-sm text-red-400">{error}</div>}
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setSheet(null);
-                setError(null);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              disabled={!sheet?.name?.trim() || pending}
-              onClick={() => (isEditing ? editM.mutate() : createM.mutate())}
-            >
-              {pending
-                ? isEditing
-                  ? 'Saving…'
-                  : 'Creating…'
-                : isEditing
-                  ? 'Save'
-                  : 'Create'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
-    </Card>
-  );
-}
 
 function TagsTab() {
   const qc = useQueryClient();

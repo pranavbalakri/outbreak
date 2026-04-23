@@ -12,13 +12,17 @@ import {
 } from '../api/queries.js';
 import { useAuth } from '../auth/AuthContext.js';
 import { Badge, Button, Card, Field, Modal, Select, inputClass } from '../components/ui.js';
+import { FoldersPanel } from '../components/FoldersPanel.js';
 import { formatMinutes } from '../lib/format.js';
+
+type ProjectsTab = 'projects' | 'folders';
 
 export function ProjectsPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
   const queryClient = useQueryClient();
 
+  const [tab, setTab] = useState<ProjectsTab>('projects');
   const [folderFilter, setFolderFilter] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [search, setSearch] = useState('');
@@ -60,18 +64,33 @@ export function ProjectsPage() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Projects</h1>
-        {isAdmin && (
-          <div className="flex gap-2">
-            <Button variant="secondary" onClick={() => setShowCreateFolder(true)}>
-              + Folder
-            </Button>
-            <Button onClick={() => setShowCreateProject(true)}>+ New project</Button>
-          </div>
+        {isAdmin && tab === 'projects' && (
+          <Button onClick={() => setShowCreateProject(true)}>+ New project</Button>
         )}
       </div>
 
+      <div className="mb-6 flex gap-2 border-b border-ink-400">
+        {(['projects', 'folders'] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`border-b-2 px-4 py-2 text-sm capitalize ${
+              tab === t
+                ? 'border-brand-400 text-brand-300 font-medium'
+                : 'border-transparent text-ink-200 hover:text-ink-100'
+            }`}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'folders' ? (
+        <FoldersPanel />
+      ) : (
+      <>
       {/* Filters */}
       <Card className="mb-4 flex flex-wrap items-end gap-3 p-4">
         <div className="min-w-[180px]">
@@ -169,6 +188,8 @@ export function ProjectsPage() {
             queryClient.invalidateQueries({ queryKey: ['folders'] });
           }}
         />
+      )}
+      </>
       )}
     </div>
   );
