@@ -94,16 +94,21 @@ model RateHistory {
 }
 
 model Folder {
-  id          String    @id @default(cuid())
-  name        String
-  color       String?
-  archivedAt  DateTime? @map("archived_at")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-  deletedAt   DateTime? @map("deleted_at")
+  id              String    @id @default(cuid())
+  name            String
+  color           String?
+  // Optional parent — enables sub-folder trees. Null means top-level.
+  parentFolderId  String?   @map("parent_folder_id")
+  archivedAt      DateTime? @map("archived_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
 
-  projects    Project[]
+  parent          Folder?   @relation("FolderTree", fields: [parentFolderId], references: [id])
+  children        Folder[]  @relation("FolderTree")
+  projects        Project[]
 
+  @@index([parentFolderId])
   @@map("folders")
 }
 

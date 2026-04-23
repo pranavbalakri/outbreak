@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Badge, Button, Card, Field, Modal, inputClass } from '../components/ui.js';
+import { Badge, Button, Card, Field, Modal, Select, inputClass } from '../components/ui.js';
 import { useAuth } from '../auth/AuthContext.js';
 import { apiOrigin } from '../api/client.js';
 import { useConfirm } from '../components/Confirm.js';
@@ -222,13 +222,22 @@ function FoldersTab() {
   // null = closed; { id: null } = creating; { id: '…' } = editing that folder
   const [sheet, setSheet] = useState<
     | null
-    | { id: string | null; name: string; color: string }
+    | {
+        id: string | null;
+        name: string;
+        color: string;
+        parentFolderId: string | null;
+      }
   >(null);
   const [error, setError] = useState<string | null>(null);
 
   const createM = useMutation({
     mutationFn: () =>
-      createFolder({ name: sheet!.name, color: sheet!.color }),
+      createFolder({
+        name: sheet!.name,
+        color: sheet!.color,
+        parentFolderId: sheet!.parentFolderId,
+      }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['folders'] });
       setSheet(null);
@@ -239,7 +248,11 @@ function FoldersTab() {
 
   const editM = useMutation({
     mutationFn: () =>
-      updateFolder(sheet!.id!, { name: sheet!.name, color: sheet!.color }),
+      updateFolder(sheet!.id!, {
+        name: sheet!.name,
+        color: sheet!.color,
+        parentFolderId: sheet!.parentFolderId,
+      }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['folders'] });
       setSheet(null);
@@ -266,7 +279,11 @@ function FoldersTab() {
     <Card className="p-4">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-ink-100">Folders</h2>
-        <Button onClick={() => setSheet({ id: null, name: '', color: '#1a73ff' })}>
+        <Button
+          onClick={() =>
+            setSheet({ id: null, name: '', color: '#1a73ff', parentFolderId: null })
+          }
+        >
           New folder
         </Button>
       </div>
@@ -274,15 +291,21 @@ function FoldersTab() {
         <thead>
           <tr className="border-b border-ink-400 text-left text-xs uppercase text-ink-200">
             <th className="py-2">Name</th>
+            <th className="py-2">Parent</th>
             <th className="py-2">Color</th>
             <th className="py-2">Status</th>
             <th className="py-2"></th>
           </tr>
         </thead>
         <tbody>
-          {foldersQ.data?.folders.map((f) => (
+          {foldersQ.data?.folders.map((f) => {
+            const parentName = f.parentFolderId
+              ? foldersQ.data?.folders.find((p) => p.id === f.parentFolderId)?.name
+              : null;
+            return (
             <tr key={f.id} className="border-b border-ink-500 last:border-none">
               <td className="py-2">{f.name}</td>
+              <td className="py-2 text-ink-200">{parentName ?? '—'}</td>
               <td className="py-2">
                 {f.color && (
                   <span
@@ -304,6 +327,7 @@ function FoldersTab() {
                         id: f.id,
                         name: f.name,
                         color: f.color ?? '#1a73ff',
+                        parentFolderId: f.parentFolderId,
                       })
                     }
                   >
@@ -340,7 +364,8 @@ function FoldersTab() {
                 </div>
               </td>
             </tr>
-          ))}
+            );
+          })}
         </tbody>
       </table>
 
@@ -361,6 +386,26 @@ function FoldersTab() {
                 setSheet((s) => (s ? { ...s, name: e.target.value } : s))
               }
               autoFocus
+            />
+          </Field>
+          <Field
+            label="Parent folder"
+            {...(sheet?.id
+              ? { hint: "Can't be set to this folder or one of its descendants." }
+              : {})}
+          >
+            <Select
+              value={sheet?.parentFolderId ?? ''}
+              onChange={(v) =>
+                setSheet((s) => (s ? { ...s, parentFolderId: v || null } : s))
+              }
+              placeholder="No parent (top level)"
+              options={[
+                { value: '', label: 'No parent (top level)' },
+                ...(foldersQ.data?.folders ?? [])
+                  .filter((f) => !f.archivedAt && f.id !== sheet?.id)
+                  .map((f) => ({ value: f.id, label: f.name })),
+              ]}
             />
           </Field>
           <Field label="Color">

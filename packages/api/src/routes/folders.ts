@@ -4,9 +4,32 @@ import { CreateFolderInputSchema, UpdateFolderInputSchema } from '@outbreak/shar
 import { prisma } from '../db.js';
 import { requireAdmin, requireUser } from '../lib/auth.js';
 import { toFolderDto } from '../lib/dto.js';
-import { Conflict, NotFound } from '../errors.js';
+import { BadRequest, Conflict, NotFound } from '../errors.js';
 
 const IdParams = z.object({ id: z.string().min(1) });
+
+// Walk the parent chain to prevent A→B→A cycles. Returns true if setting
+// `folderId.parent = candidateParent` would create a loop.
+async function wouldCycle(
+  folderId: string,
+  candidateParent: string | null,
+): Promise<boolean> {
+  if (!candidateParent) return false;
+  if (candidateParent === folderId) return true;
+  let cursor: string | null = candidateParent;
+  const seen = new Set<string>();
+  while (cursor) {
+    if (cursor === folderId) return true;
+    if (seen.has(cursor)) return true; // pre-existing loop, fail safe
+    seen.add(cursor);
+    const parent: { parentFolderId: string | null } | null = await prisma.folder.findUnique({
+      where: { id: cursor },
+      select: { parentFolderId: true },
+    });
+    cursor = parent?.parentFolderId ?? null;
+  }
+  return false;
+}
 
 export async function registerFolderRoutes(app: FastifyInstance): Promise<void> {
   app.get('/folders', { preHandler: requireUser }, async () => {
@@ -19,8 +42,18 @@ export async function registerFolderRoutes(app: FastifyInstance): Promise<void> 
 
   app.post('/folders', { preHandler: requireAdmin }, async (request) => {
     const input = CreateFolderInputSchema.parse(request.body);
+    if (input.parentFolderId) {
+      const parent = await prisma.folder.findFirst({
+        where: { id: input.parentFolderId, deletedAt: null },
+      });
+      if (!parent) throw BadRequest('invalid_parent', 'Parent folder not found');
+    }
     const folder = await prisma.folder.create({
-      data: { name: input.name, color: input.color ?? null },
+      data: {
+        name: input.name,
+        color: input.color ?? null,
+        parentFolderId: input.parentFolderId ?? null,
+      },
     });
     return { folder: toFolderDto(folder) };
   });
@@ -34,11 +67,29 @@ export async function registerFolderRoutes(app: FastifyInstance): Promise<void> 
       const existing = await prisma.folder.findFirst({ where: { id, deletedAt: null } });
       if (!existing) throw NotFound('Folder not found');
 
+      if (input.parentFolderId !== undefined) {
+        if (await wouldCycle(id, input.parentFolderId ?? null)) {
+          throw Conflict(
+            'folder_cycle',
+            'A folder cannot be a descendant of itself.',
+          );
+        }
+        if (input.parentFolderId) {
+          const parent = await prisma.folder.findFirst({
+            where: { id: input.parentFolderId, deletedAt: null },
+          });
+          if (!parent) throw BadRequest('invalid_parent', 'Parent folder not found');
+        }
+      }
+
       const folder = await prisma.folder.update({
         where: { id },
         data: {
           ...(input.name !== undefined && { name: input.name }),
           ...(input.color !== undefined && { color: input.color }),
+          ...(input.parentFolderId !== undefined && {
+            parentFolderId: input.parentFolderId,
+          }),
           ...(input.archived !== undefined && {
             archivedAt: input.archived ? new Date() : null,
           }),

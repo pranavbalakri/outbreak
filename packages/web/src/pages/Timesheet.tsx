@@ -4,11 +4,14 @@ import type { TimeEntryDto } from '@outbreak/shared';
 import {
   createTimeEntry,
   deleteTimeEntry,
+  fetchFolders,
   fetchProjects,
   fetchTimeEntries,
   updateTimeEntry,
 } from '../api/queries.js';
-import { Badge, Button, Card, Field, Modal, Select, inputClass } from '../components/ui.js';
+import { Badge, Button, Card, Field, Modal, inputClass } from '../components/ui.js';
+import { ProjectPicker } from '../components/ProjectPicker.js';
+import type { FolderDto, ProjectDto } from '@outbreak/shared';
 import { addDays, formatMinutes, startOfIsoWeek, durationMinutes } from '../lib/format.js';
 import { ApiError } from '../api/client.js';
 
@@ -30,6 +33,10 @@ export function TimesheetPage() {
   const { data: projectData } = useQuery({
     queryKey: ['projects'],
     queryFn: () => fetchProjects(),
+  });
+  const { data: folderData } = useQuery({
+    queryKey: ['folders'],
+    queryFn: () => fetchFolders(),
   });
   const projectById = useMemo(() => {
     const m = new Map<string, { id: string; name: string }>();
@@ -155,6 +162,7 @@ export function TimesheetPage() {
       {adding && (
         <AddTimeModal
           projects={projectData?.projects ?? []}
+          folders={folderData?.folders ?? []}
           onClose={() => setAdding(false)}
           onCreated={() => {
             setAdding(false);
@@ -167,6 +175,7 @@ export function TimesheetPage() {
           entry={entryData?.entries.find((e) => e.id === attachingId) ?? null}
           entryId={attachingId}
           projects={projectData?.projects ?? []}
+          folders={folderData?.folders ?? []}
           onClose={() => setAttachingId(null)}
           onAttached={() => {
             setAttachingId(null);
@@ -316,10 +325,12 @@ function DayCell({
 
 function AddTimeModal({
   projects,
+  folders,
   onClose,
   onCreated,
 }: {
-  projects: { id: string; name: string }[];
+  projects: ProjectDto[];
+  folders: FolderDto[];
   onClose: () => void;
   onCreated: () => void;
 }) {
@@ -347,14 +358,11 @@ function AddTimeModal({
     <Modal open onClose={onClose} title="Add time">
       <div className="space-y-3">
         <Field label="Project">
-          <Select
-            value={projectId}
-            onChange={setProjectId}
-            placeholder="No project (general time)"
-            options={[
-              { value: '', label: 'No project (general time)' },
-              ...projects.map((p) => ({ value: p.id, label: p.name })),
-            ]}
+          <ProjectPicker
+            value={projectId || null}
+            onChange={(v) => setProjectId(v ?? '')}
+            folders={folders}
+            projects={projects}
           />
         </Field>
         <div className="grid grid-cols-3 gap-3">
@@ -418,12 +426,14 @@ function AttachModal({
   entry,
   entryId,
   projects,
+  folders,
   onClose,
   onAttached,
 }: {
   entry: TimeEntryDto | null;
   entryId: string;
-  projects: { id: string; name: string }[];
+  projects: ProjectDto[];
+  folders: FolderDto[];
   onClose: () => void;
   onAttached: () => void;
 }) {
@@ -444,14 +454,11 @@ function AttachModal({
     >
       <div className="space-y-3">
         <Field label="Project">
-          <Select
-            value={projectId}
-            onChange={setProjectId}
-            placeholder="No project (general time)"
-            options={[
-              { value: '', label: 'No project (general time)' },
-              ...projects.map((p) => ({ value: p.id, label: p.name })),
-            ]}
+          <ProjectPicker
+            value={projectId || null}
+            onChange={(v) => setProjectId(v ?? '')}
+            folders={folders}
+            projects={projects}
           />
         </Field>
         <div className="flex justify-end gap-2">

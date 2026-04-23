@@ -15,7 +15,11 @@ export const logout = () => api('/auth/logout', { method: 'POST' });
 
 // --- Folders
 export const fetchFolders = () => api<{ folders: FolderDto[] }>('/folders');
-export const createFolder = (input: { name: string; color?: string }) =>
+export const createFolder = (input: {
+  name: string;
+  color?: string;
+  parentFolderId?: string | null;
+}) =>
   api<{ folder: FolderDto }>('/folders', { method: 'POST', body: JSON.stringify(input) });
 export const deleteFolder = (id: string) =>
   api(`/folders/${id}`, { method: 'DELETE' });
@@ -356,7 +360,12 @@ export const revokeApiToken = (id: string) =>
 // --- Folder CRUD extras
 export const updateFolder = (
   id: string,
-  input: Partial<{ name: string; color: string; archived: boolean }>,
+  input: Partial<{
+    name: string;
+    color: string;
+    archived: boolean;
+    parentFolderId: string | null;
+  }>,
 ) =>
   api<{ folder: FolderDto }>(`/folders/${id}`, {
     method: 'PATCH',

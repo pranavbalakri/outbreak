@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  fetchFolders,
   fetchProjects,
   fetchTimeEntries,
   updateTimeEntry,
   deleteTimeEntry,
   fetchUpcomingProjects,
 } from '../api/queries.js';
+import { ProjectPicker } from '../components/ProjectPicker.js';
 import type { TimeEntryDto } from '@outbreak/shared';
 import { formatElapsed, useTimer } from '../hooks/useTimer.js';
 import { Badge, Button, Card, Field, Select, inputClass } from '../components/ui.js';
@@ -22,7 +24,12 @@ export function DashboardPage() {
     queryKey: ['projects'],
     queryFn: () => fetchProjects(),
   });
+  const { data: folderData } = useQuery({
+    queryKey: ['folders'],
+    queryFn: () => fetchFolders(),
+  });
   const assigned = projectData?.projects ?? [];
+  const folders = folderData?.folders ?? [];
 
   const todayStart = useMemo(() => {
     const d = new Date();
@@ -132,6 +139,7 @@ export function DashboardPage() {
                 entry={entry}
                 projectName={entry.projectId ? projectNameById.get(entry.projectId) : undefined}
                 assignedProjects={assigned}
+                folders={folders}
                 onChange={() => {
                   queryClient.invalidateQueries({ queryKey: ['time-entries'] });
                 }}
@@ -183,16 +191,17 @@ function EntryRow({
   entry,
   projectName,
   assignedProjects,
+  folders,
   onChange,
 }: {
   entry: TimeEntryDto;
   projectName: string | undefined;
-  assignedProjects: { id: string; name: string }[];
+  assignedProjects: import('@outbreak/shared').ProjectDto[];
+  folders: import('@outbreak/shared').FolderDto[];
   onChange: () => void;
 }) {
   const [editingNote, setEditingNote] = useState(false);
   const [noteDraft, setNoteDraft] = useState(entry.description ?? '');
-  const [attaching, setAttaching] = useState(false);
 
   const saveNote = async () => {
     await updateTimeEntry(entry.id, { description: noteDraft || null });
@@ -202,7 +211,6 @@ function EntryRow({
 
   const attach = async (projectId: string) => {
     await updateTimeEntry(entry.id, { projectId: projectId || null });
-    setAttaching(false);
     onChange();
   };
 
@@ -226,11 +234,14 @@ function EntryRow({
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">
-              {entry.projectId ? (projectName ?? 'Project') : (
-                <span className="text-ink-200">Unassigned</span>
-              )}
-            </span>
+            <ProjectPicker
+              value={entry.projectId}
+              onChange={(v) => void attach(v ?? '')}
+              folders={folders}
+              projects={assignedProjects}
+              variant="inline"
+              ariaLabel="Change project"
+            />
             {!entry.endedAt && <Badge tone="green">Running</Badge>}
             {entry.source === 'EXTENSION' && <Badge tone="indigo">Extension</Badge>}
             {entry.source === 'MANUAL' && <Badge>Manual</Badge>}
@@ -263,30 +274,8 @@ function EntryRow({
               )}
             </div>
           )}
-          {attaching && (
-            <div className="mt-2 flex items-center gap-2">
-              <Select
-                value={entry.projectId ?? ''}
-                onChange={(v) => void attach(v)}
-                placeholder="Choose a project…"
-                triggerWidth={260}
-                options={[
-                  { value: '', label: 'No project (general time)' },
-                  ...assignedProjects.map((p) => ({ value: p.id, label: p.name })),
-                ]}
-              />
-              <Button variant="secondary" onClick={() => setAttaching(false)}>
-                Cancel
-              </Button>
-            </div>
-          )}
         </div>
         <div className="flex flex-shrink-0 items-center gap-2">
-          {!attaching && entry.endedAt && (
-            <Button variant="secondary" onClick={() => setAttaching(true)}>
-              {entry.projectId ? 'Change project' : 'Attach to project'}
-            </Button>
-          )}
           {entry.endedAt && (
             <button
               type="button"

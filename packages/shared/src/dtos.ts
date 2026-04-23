@@ -49,6 +49,7 @@ export const FolderDtoSchema = z.object({
   id: IdSchema,
   name: z.string(),
   color: z.string().nullable(),
+  parentFolderId: IdSchema.nullable(),
   archivedAt: DateTimeSchema.nullable(),
   createdAt: DateTimeSchema,
 });
@@ -57,6 +58,7 @@ export type FolderDto = z.infer<typeof FolderDtoSchema>;
 export const CreateFolderInputSchema = z.object({
   name: z.string().min(1).max(200),
   color: z.string().max(32).optional(),
+  parentFolderId: IdSchema.nullable().optional(),
 });
 export type CreateFolderInput = z.infer<typeof CreateFolderInputSchema>;
 

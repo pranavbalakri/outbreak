@@ -28,6 +28,7 @@ export function toFolderDto(f: Folder): FolderDto {
     id: f.id,
     name: f.name,
     color: f.color,
+    parentFolderId: f.parentFolderId,
     archivedAt: f.archivedAt?.toISOString() ?? null,
     createdAt: f.createdAt.toISOString(),
   };

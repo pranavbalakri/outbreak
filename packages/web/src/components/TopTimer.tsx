@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { formatElapsed, useTimer } from '../hooks/useTimer.js';
-import { fetchProjects, updateTimeEntry } from '../api/queries.js';
-import { Select } from './ui.js';
+import { fetchFolders, fetchProjects, updateTimeEntry } from '../api/queries.js';
+import { ProjectPicker } from './ProjectPicker.js';
 
 /**
  * Toggl-style top-bar timer. While idle, offers a description input, project
@@ -18,12 +18,12 @@ export function TopTimer() {
     queryKey: ['projects'],
     queryFn: () => fetchProjects(),
   });
-  const projects = useMemo(() => projectData?.projects ?? [], [projectData]);
-  const projectMap = useMemo(() => {
-    const m = new Map<string, { id: string; name: string }>();
-    for (const p of projects) m.set(p.id, p);
-    return m;
-  }, [projects]);
+  const { data: folderData } = useQuery({
+    queryKey: ['folders'],
+    queryFn: () => fetchFolders(),
+  });
+  const projects = projectData?.projects ?? [];
+  const folders = folderData?.folders ?? [];
 
   const [draftDescription, setDraftDescription] = useState('');
   const [draftProjectId, setDraftProjectId] = useState<string>('');
@@ -46,9 +46,9 @@ export function TopTimer() {
     },
   });
 
-  const onProjectChange = (next: string) => {
-    if (running) patchActive.mutate({ projectId: next || null });
-    else setDraftProjectId(next);
+  const onProjectChange = (next: string | null) => {
+    if (running) patchActive.mutate({ projectId: next });
+    else setDraftProjectId(next ?? '');
   };
 
   const commitDescription = () => {
@@ -71,11 +71,6 @@ export function TopTimer() {
     });
   };
 
-  const extraOption =
-    running && active?.projectId && !projectMap.has(active.projectId)
-      ? [{ id: active.projectId, name: 'Project' }]
-      : [];
-
   return (
     <div className="flex items-center gap-2">
       <input
@@ -95,16 +90,13 @@ export function TopTimer() {
         className="w-60 rounded-md border border-ink-400 bg-ink-800 px-3 py-1.5 text-sm text-ink-100 placeholder:text-ink-300 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/40"
       />
 
-      <Select
+      <ProjectPicker
         ariaLabel="Project"
-        triggerWidth={180}
-        value={running ? (active!.projectId ?? '') : draftProjectId}
+        triggerWidth={200}
+        value={running ? (active!.projectId ?? null) : (draftProjectId || null)}
         onChange={onProjectChange}
-        placeholder="No project"
-        options={[
-          { value: '', label: 'No project' },
-          ...extraOption.concat(projects).map((p) => ({ value: p.id, label: p.name })),
-        ]}
+        folders={folders}
+        projects={projects}
       />
 
       <div
