@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from 'react';
 
 export function Button({
@@ -49,9 +50,12 @@ export function Modal({
   children: ReactNode;
 }) {
   if (!open) return null;
-  return (
+  // Portal into document.body so that ancestors with transforms, filters, or
+  // `backdrop-filter` (e.g. the sticky header) don't create a containing block
+  // for `position: fixed`, which would re-scope `inset-0` to that ancestor.
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
@@ -71,7 +75,8 @@ export function Modal({
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
