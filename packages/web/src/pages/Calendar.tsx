@@ -533,14 +533,14 @@ export function CalendarPage() {
                         title={`${name} · ${startStr} · ${formatMinutes(Math.round((p.endHour - p.startHour) * 60))}${p.entry.description ? ` · ${p.entry.description}` : ''}`}
                       >
                         <div className="truncate font-medium">{name}</div>
+                        {isAdmin && p.entry.user && (
+                          <div className="truncate text-[10px] font-medium opacity-90">
+                            {p.entry.user.name}
+                          </div>
+                        )}
                         {p.entry.description && p.height > 34 && (
                           <div className="truncate text-[10px] opacity-75">
                             {p.entry.description}
-                          </div>
-                        )}
-                        {isAdmin && p.entry.user && p.height > 50 && (
-                          <div className="truncate text-[10px] opacity-75">
-                            {p.entry.user.name}
                           </div>
                         )}
                       </div>
@@ -570,6 +570,7 @@ export function CalendarPage() {
           state={editor}
           projects={projects}
           folders={folders}
+          isAdmin={isAdmin}
           onClose={() => setEditor(null)}
           onSaved={() => {
             setEditor(null);
@@ -585,12 +586,14 @@ function TimeEntryEditor({
   state,
   projects,
   folders,
+  isAdmin,
   onClose,
   onSaved,
 }: {
   state: EditorState;
   projects: ProjectDto[];
   folders: FolderDto[];
+  isAdmin: boolean;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -676,16 +679,18 @@ function TimeEntryEditor({
     deleteMutation.mutate();
   };
 
-  const authorLine =
-    state.mode === 'edit' && state.entry.user
-      ? `Logged by ${state.entry.user.name}`
+  const authorName =
+    isAdmin && state.mode === 'edit' && state.entry.user
+      ? state.entry.user.name
       : null;
 
   return (
     <Modal open onClose={onClose} title={isEdit ? 'Edit time entry' : 'Add time'}>
       <div className="space-y-3">
-        {authorLine && (
-          <div className="text-xs text-ink-300">{authorLine}</div>
+        {authorName && (
+          <div className="rounded-md border border-ink-400 bg-ink-900/60 px-3 py-2 text-xs text-ink-200">
+            Logged by <span className="font-medium text-ink-100">{authorName}</span>
+          </div>
         )}
         <Field label="Project">
           <ProjectPicker
