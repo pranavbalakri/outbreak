@@ -243,8 +243,6 @@ function EntryRow({
               ariaLabel="Change project"
             />
             {!entry.endedAt && <Badge tone="green">Running</Badge>}
-            {entry.source === 'EXTENSION' && <Badge tone="indigo">Extension</Badge>}
-            {entry.source === 'MANUAL' && <Badge>Manual</Badge>}
           </div>
           <div className="mt-0.5 text-xs text-ink-200">
             {formatTime(entry.startedAt)} – {entry.endedAt ? formatTime(entry.endedAt) : 'now'} ·{' '}
