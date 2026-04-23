@@ -9,6 +9,7 @@ import { TimesheetPage } from './pages/Timesheet.js';
 import { ReportsPage } from './pages/Reports.js';
 import { TeamPage } from './pages/Team.js';
 import { SettingsPage } from './pages/Settings.js';
+import { CalendarPage } from './pages/Calendar.js';
 import { ExtensionConnectPage } from './pages/ExtensionConnect.js';
 
 export function App() {
@@ -24,6 +25,7 @@ export function App() {
         }
       >
         <Route path="/" element={<DashboardPage />} />
+        <Route path="/calendar" element={<CalendarPage />} />
         <Route path="/projects" element={<ProjectsPage />} />
         <Route path="/projects/:id" element={<ProjectDetailPage />} />
         <Route path="/timesheet" element={<TimesheetPage />} />

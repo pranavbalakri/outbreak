@@ -34,9 +34,9 @@ export function FeedbackLauncher() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="font-mono text-[11px] uppercase tracking-wider text-ink-200 hover:text-brand-300"
+        className="text-xs text-ink-200 hover:text-brand-300"
       >
-        [ feedback ]
+        Feedback
       </button>
       <Modal open={open} onClose={close} title="Send feedback">
         {sent ? (

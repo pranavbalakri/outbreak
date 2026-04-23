@@ -1,11 +1,12 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext.js';
-import { TimerChip } from './TimerChip.js';
+import { TopTimer } from './TopTimer.js';
 import { NotificationBell } from './NotificationBell.js';
 import { FeedbackLauncher } from './FeedbackLauncher.js';
 
 const NAV = [
   { to: '/', label: 'Dashboard', end: true },
+  { to: '/calendar', label: 'Calendar' },
   { to: '/projects', label: 'Projects' },
   { to: '/timesheet', label: 'Timesheet' },
   { to: '/reports', label: 'Reports', adminOnly: true },
@@ -27,7 +28,7 @@ function LogoMark() {
         <div className="font-sans text-xl font-bold tracking-tight">
           outbreak<span className="text-brand-500">.</span>
         </div>
-        <div className="tk-sm mt-1">Internal tracker · v0.1</div>
+        <div className="mt-1 text-xs text-ink-200">For Break Debate</div>
       </div>
     </div>
   );
@@ -43,7 +44,7 @@ export function Layout() {
         <div className="flex h-16 items-center justify-between px-6">
           <LogoMark />
           <div className="flex items-center gap-5">
-            <TimerChip />
+            <TopTimer />
             <NotificationBell />
             <FeedbackLauncher />
             {user && (
@@ -61,30 +62,19 @@ export function Layout() {
                 </div>
                 <button
                   onClick={() => void logout()}
-                  className="tk-sm text-[10px] text-ink-200 hover:text-brand-300"
+                  className="text-xs text-ink-200 hover:text-brand-300"
                 >
-                  [ sign out ]
+                  Sign out
                 </button>
               </div>
             )}
           </div>
         </div>
         <div className="hr-brand" />
-        <div className="flex items-center gap-4 px-6 py-2 font-mono text-[11px] text-ink-200">
-          <span className="flex items-center gap-2">
-            <span className="blink inline-block h-1.5 w-1.5 rounded-full bg-brand-400" />
-            SYSTEM ONLINE
-          </span>
-          <span>·</span>
-          <span>{user ? user.email : 'authenticating…'}</span>
-          <span>·</span>
-          <span>{user ? user.timezone : ''}</span>
-        </div>
       </header>
 
       <div className="flex flex-1">
         <nav className="w-52 border-r border-ink-400 bg-ink-900/40 py-4">
-          <div className="tk-sm mb-3 px-4">&gt; navigation</div>
           <ul className="space-y-0.5 px-2">
             {NAV.filter((item) => !('adminOnly' in item) || !item.adminOnly || isAdmin).map(
               (item) => (
@@ -93,14 +83,14 @@ export function Layout() {
                     to={item.to}
                     end={'end' in item && item.end}
                     className={({ isActive }: { isActive: boolean }) =>
-                      `block rounded-sm px-3 py-1.5 font-mono text-sm transition ${
+                      `block rounded-sm px-3 py-1.5 text-sm transition ${
                         isActive
                           ? 'border-l-2 border-brand-500 bg-brand-500/10 text-brand-200 pl-[10px]'
                           : 'border-l-2 border-transparent text-ink-100 hover:text-brand-200'
                       }`
                     }
                   >
-                    {item.label.toLowerCase()}
+                    {item.label}
                   </NavLink>
                 </li>
               ),
