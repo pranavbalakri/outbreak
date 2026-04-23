@@ -255,9 +255,10 @@ export function ReportsPage() {
               placeholder="All instructors"
               options={[
                 { value: '', label: 'All instructors' },
-                ...(usersQ.data?.users ?? [])
-                  .filter((u) => u.role === 'INSTRUCTOR')
-                  .map((u) => ({ value: u.id, label: u.name })),
+                ...(usersQ.data?.users ?? []).map((u) => ({
+                  value: u.id,
+                  label: u.name,
+                })),
               ]}
             />
           </Field>
