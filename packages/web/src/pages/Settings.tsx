@@ -53,15 +53,15 @@ export function SettingsPage() {
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-semibold">Settings</h1>
-      <div className="flex gap-2 border-b border-slate-200">
+      <div className="flex gap-2 border-b border-ink-400">
         {tabs.map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={`border-b-2 px-4 py-2 text-sm ${
               tab === t
-                ? 'border-brand-600 text-brand-700 font-medium'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
+                ? 'border-brand-400 text-brand-300 font-medium'
+                : 'border-transparent text-ink-200 hover:text-ink-100'
             }`}
           >
             {TAB_LABELS[t]}
@@ -97,8 +97,8 @@ function FeedbackTab() {
   return (
     <Card className="p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-slate-700">Feedback</h2>
-        <label className="flex items-center gap-2 text-xs text-slate-600">
+        <h2 className="text-sm font-semibold text-ink-100">Feedback</h2>
+        <label className="flex items-center gap-2 text-xs text-ink-200">
           <input
             type="checkbox"
             checked={showResolved}
@@ -108,18 +108,18 @@ function FeedbackTab() {
         </label>
       </div>
       {fq.data && fq.data.feedback.length === 0 ? (
-        <div className="text-sm text-slate-400">No feedback submitted yet.</div>
+        <div className="text-sm text-ink-300">No feedback submitted yet.</div>
       ) : (
         <ul className="space-y-3">
           {fq.data?.feedback.map((f) => (
             <li
               key={f.id}
-              className="rounded border border-slate-200 p-3 text-sm"
+              className="rounded border border-ink-400 p-3 text-sm"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="font-medium">{f.userName}</div>
-                  <div className="text-xs text-slate-500">
+                  <div className="text-xs text-ink-200">
                     {f.userEmail} · {new Date(f.createdAt).toLocaleString()}
                     {f.pageUrl && (
                       <>
@@ -153,7 +153,7 @@ function FeedbackTab() {
                   </Button>
                 )}
               </div>
-              <p className="mt-2 whitespace-pre-wrap text-slate-700">
+              <p className="mt-2 whitespace-pre-wrap text-ink-100">
                 {f.message}
               </p>
             </li>
@@ -170,24 +170,24 @@ function UsageTab() {
 
   return (
     <Card className="p-4">
-      <h2 className="mb-3 text-sm font-semibold text-slate-700">
+      <h2 className="mb-3 text-sm font-semibold text-ink-100">
         Usage by source (last 90 days)
       </h2>
-      <p className="mb-4 text-xs text-slate-500">
+      <p className="mb-4 text-xs text-ink-200">
         Are instructors using the Chrome extension? Count of time entries by
         source, grouped by ISO week.
       </p>
       <div className="mb-4 grid grid-cols-3 gap-3">
         {(['WEB', 'EXTENSION', 'MANUAL'] as const).map((s) => (
-          <div key={s} className="rounded border border-slate-200 p-3">
-            <div className="text-xs uppercase tracking-wide text-slate-500">{s}</div>
+          <div key={s} className="rounded border border-ink-400 p-3">
+            <div className="text-xs uppercase tracking-wide text-ink-200">{s}</div>
             <div className="mt-1 text-xl font-semibold">{totals?.[s] ?? 0}</div>
           </div>
         ))}
       </div>
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
+          <tr className="border-b border-ink-400 text-left text-xs uppercase text-ink-200">
             <th className="py-2">ISO week</th>
             <th className="py-2">Source</th>
             <th className="py-2 text-right">Entries</th>
@@ -195,7 +195,7 @@ function UsageTab() {
         </thead>
         <tbody>
           {q.data?.weeks.map((w, i) => (
-            <tr key={i} className="border-b border-slate-100 last:border-none">
+            <tr key={i} className="border-b border-ink-500 last:border-none">
               <td className="py-2">
                 {w.isoYear}-W{String(w.isoWeek).padStart(2, '0')}
               </td>
@@ -208,7 +208,7 @@ function UsageTab() {
         </tbody>
       </table>
       {q.data && q.data.weeks.length === 0 && (
-        <div className="py-4 text-sm text-slate-400">No time entries in range.</div>
+        <div className="py-4 text-sm text-ink-300">No time entries in range.</div>
       )}
     </Card>
   );
@@ -247,12 +247,12 @@ function FoldersTab() {
   return (
     <Card className="p-4">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-slate-700">Folders</h2>
+        <h2 className="text-sm font-semibold text-ink-100">Folders</h2>
         <Button onClick={() => setOpen(true)}>New folder</Button>
       </div>
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
+          <tr className="border-b border-ink-400 text-left text-xs uppercase text-ink-200">
             <th className="py-2">Name</th>
             <th className="py-2">Color</th>
             <th className="py-2">Status</th>
@@ -261,7 +261,7 @@ function FoldersTab() {
         </thead>
         <tbody>
           {foldersQ.data?.folders.map((f) => (
-            <tr key={f.id} className="border-b border-slate-100 last:border-none">
+            <tr key={f.id} className="border-b border-ink-500 last:border-none">
               <td className="py-2">{f.name}</td>
               <td className="py-2">
                 {f.color && (
@@ -270,7 +270,7 @@ function FoldersTab() {
                     style={{ backgroundColor: f.color }}
                   />
                 )}{' '}
-                <code className="text-xs text-slate-500">{f.color ?? '—'}</code>
+                <code className="text-xs text-ink-200">{f.color ?? '—'}</code>
               </td>
               <td className="py-2">
                 {f.archivedAt ? <Badge tone="slate">Archived</Badge> : <Badge tone="green">Active</Badge>}
@@ -363,12 +363,12 @@ function TagsTab() {
         {tagsQ.data?.tags.map((t) => (
           <span
             key={t.id}
-            className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-sm"
+            className="inline-flex items-center gap-2 rounded-full bg-ink-700 px-3 py-1 text-sm"
           >
             {t.name}
             <button
               onClick={() => deleteM.mutate(t.id)}
-              className="text-slate-400 hover:text-red-600"
+              className="text-ink-300 hover:text-red-600"
               aria-label={`Delete tag ${t.name}`}
             >
               ✕
@@ -376,7 +376,7 @@ function TagsTab() {
           </span>
         ))}
         {tagsQ.data?.tags.length === 0 && (
-          <span className="text-sm text-slate-400">No tags yet.</span>
+          <span className="text-sm text-ink-300">No tags yet.</span>
         )}
       </div>
     </Card>
@@ -403,14 +403,14 @@ function WeeksTab() {
 
   return (
     <Card className="p-0">
-      <div className="border-b border-slate-200 p-4 text-sm text-slate-600">
+      <div className="border-b border-ink-400 p-4 text-sm text-ink-200">
         Locking a week freezes all time entries whose <code>started_at</code> falls in it.
         Enforced at the database level via a trigger, so even direct SQL can't slip an edit
         through.
       </div>
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
+          <tr className="border-b border-ink-400 text-left text-xs uppercase text-ink-200">
             <th className="px-4 py-3">ISO week</th>
             <th className="px-4 py-3">Dates</th>
             <th className="px-4 py-3 text-right">Tracked</th>
@@ -422,12 +422,12 @@ function WeeksTab() {
           {weeksQ.data?.weeks.map((w) => (
             <tr
               key={`${w.isoYear}-${w.isoWeek}`}
-              className="border-b border-slate-100 last:border-none"
+              className="border-b border-ink-500 last:border-none"
             >
               <td className="px-4 py-3 font-medium">
                 {w.isoYear}-W{String(w.isoWeek).padStart(2, '0')}
               </td>
-              <td className="px-4 py-3 text-slate-600">
+              <td className="px-4 py-3 text-ink-200">
                 {w.startDate} → {w.endDate}
               </td>
               <td className="px-4 py-3 text-right">{fmtMin(w.totalMinutes)}</td>
@@ -476,13 +476,13 @@ function DevicesTab() {
 
   return (
     <Card className="p-4">
-      <h2 className="mb-3 text-sm font-semibold text-slate-700">Connected devices</h2>
+      <h2 className="mb-3 text-sm font-semibold text-ink-100">Connected devices</h2>
       {tokensQ.data && tokensQ.data.tokens.length === 0 ? (
-        <div className="text-sm text-slate-400">No connected devices. Install the Chrome extension to get started.</div>
+        <div className="text-sm text-ink-300">No connected devices. Install the Chrome extension to get started.</div>
       ) : (
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
+            <tr className="border-b border-ink-400 text-left text-xs uppercase text-ink-200">
               <th className="py-2">Label</th>
               <th className="py-2">Source</th>
               <th className="py-2">Created</th>
@@ -492,15 +492,15 @@ function DevicesTab() {
           </thead>
           <tbody>
             {tokensQ.data?.tokens.map((t) => (
-              <tr key={t.id} className="border-b border-slate-100 last:border-none">
+              <tr key={t.id} className="border-b border-ink-500 last:border-none">
                 <td className="py-2">{t.label ?? '(unnamed)'}</td>
                 <td className="py-2">
                   <Badge tone="slate">{t.source}</Badge>
                 </td>
-                <td className="py-2 text-slate-600">
+                <td className="py-2 text-ink-200">
                   {new Date(t.createdAt).toLocaleDateString()}
                 </td>
-                <td className="py-2 text-slate-600">
+                <td className="py-2 text-ink-200">
                   {t.lastUsedAt ? new Date(t.lastUsedAt).toLocaleString() : '—'}
                 </td>
                 <td className="py-2 text-right">
@@ -546,8 +546,8 @@ function DataExportTab() {
 
   return (
     <Card className="p-4">
-      <h2 className="mb-3 text-sm font-semibold text-slate-700">Data export</h2>
-      <p className="mb-4 text-sm text-slate-600">
+      <h2 className="mb-3 text-sm font-semibold text-ink-100">Data export</h2>
+      <p className="mb-4 text-sm text-ink-200">
         Download a CSV of every time entry in the last 12 months.
       </p>
       <Button onClick={() => void onExport()}>Export CSV (last year)</Button>
@@ -560,23 +560,23 @@ function ProfileTab() {
   if (!user) return null;
   return (
     <Card className="p-4">
-      <h2 className="mb-3 text-sm font-semibold text-slate-700">Your profile</h2>
+      <h2 className="mb-3 text-sm font-semibold text-ink-100">Your profile</h2>
       <dl className="grid grid-cols-1 gap-y-3 text-sm sm:grid-cols-[max-content_1fr] sm:gap-x-4">
-        <dt className="text-slate-500">Name</dt>
+        <dt className="text-ink-200">Name</dt>
         <dd>{user.name}</dd>
-        <dt className="text-slate-500">Email</dt>
+        <dt className="text-ink-200">Email</dt>
         <dd>{user.email}</dd>
-        <dt className="text-slate-500">Role</dt>
+        <dt className="text-ink-200">Role</dt>
         <dd>
           <Badge tone={user.role === 'ADMIN' ? 'indigo' : 'slate'}>{user.role}</Badge>
         </dd>
-        <dt className="text-slate-500">Timezone</dt>
+        <dt className="text-ink-200">Timezone</dt>
         <dd>{user.timezone}</dd>
-        <dt className="text-slate-500">Google account</dt>
-        <dd className="text-slate-600">Linked via Google Sign-In (read-only).</dd>
+        <dt className="text-ink-200">Google account</dt>
+        <dd className="text-ink-200">Linked via Google Sign-In (read-only).</dd>
         {user.rateVisibleToSelf && (
           <>
-            <dt className="text-slate-500">Billing rate</dt>
+            <dt className="text-ink-200">Billing rate</dt>
             <dd>
               ${(user.currentRateCents / 100).toFixed(2)}/hr
             </dd>

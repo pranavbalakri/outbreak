@@ -118,7 +118,7 @@ export function ProjectsPage() {
         </div>
       </Card>
 
-      {isLoading && <div className="text-sm text-slate-500">Loading…</div>}
+      {isLoading && <div className="text-sm text-ink-200">Loading…</div>}
 
       <div className="space-y-6">
         {folders
@@ -133,17 +133,17 @@ export function ProjectsPage() {
                     className="h-3 w-3 rounded-full"
                     style={{ backgroundColor: folder.color ?? '#94a3b8' }}
                   />
-                  <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-600">
+                  <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-200">
                     {folder.name}
                   </h2>
-                  <span className="text-xs text-slate-400">({projects.length})</span>
+                  <span className="text-xs text-ink-300">({projects.length})</span>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {projects.map((p) => (
                     <ProjectCard key={p.id} project={p} />
                   ))}
                   {projects.length === 0 && (
-                    <div className="text-sm text-slate-400">No projects.</div>
+                    <div className="text-sm text-ink-300">No projects.</div>
                   )}
                 </div>
               </div>
@@ -184,12 +184,12 @@ function ProjectCard({ project }: { project: ProjectDto }) {
   return (
     <Link
       to={`/projects/${project.id}`}
-      className="block rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-brand-300 hover:shadow"
+      className="block rounded-lg border border-ink-400 bg-ink-800/60 p-4 shadow-sm transition hover:border-brand-300 hover:shadow"
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="truncate font-medium">{project.name}</div>
-          <div className="mt-0.5 text-xs text-slate-500">
+          <div className="mt-0.5 text-xs text-ink-200">
             {formatMinutes(actual)} / {formatMinutes(estimate)}
           </div>
         </div>
@@ -198,7 +198,7 @@ function ProjectCard({ project }: { project: ProjectDto }) {
           {over && <Badge tone="yellow">Over</Badge>}
         </div>
       </div>
-      <div className="mt-3 h-1.5 w-full rounded-full bg-slate-100">
+      <div className="mt-3 h-1.5 w-full rounded-full bg-ink-700">
         <div
           className={`h-full rounded-full ${over ? 'bg-yellow-500' : 'bg-brand-500'}`}
           style={{ width: `${pct}%` }}
@@ -303,7 +303,7 @@ function CreateProjectModal({
           />
         </Field>
         <Field label="Assignees">
-          <div className="flex flex-wrap gap-1 rounded-md border border-slate-300 p-2">
+          <div className="flex flex-wrap gap-1 rounded-md border border-ink-400 p-2">
             {instructors.map((u) => {
               const on = assigneeIds.includes(u.id);
               return (
@@ -316,7 +316,7 @@ function CreateProjectModal({
                     )
                   }
                   className={`rounded-full px-2 py-0.5 text-xs ${
-                    on ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-700'
+                    on ? 'bg-brand-600 text-white' : 'bg-ink-700 text-ink-100'
                   }`}
                 >
                   {u.name}
@@ -326,8 +326,8 @@ function CreateProjectModal({
           </div>
         </Field>
         <Field label="Tags">
-          <div className="flex flex-wrap gap-1 rounded-md border border-slate-300 p-2">
-            {tags.length === 0 && <span className="text-xs text-slate-400">No tags.</span>}
+          <div className="flex flex-wrap gap-1 rounded-md border border-ink-400 p-2">
+            {tags.length === 0 && <span className="text-xs text-ink-300">No tags.</span>}
             {tags.map((t) => {
               const on = tagIds.includes(t.id);
               return (
@@ -338,7 +338,7 @@ function CreateProjectModal({
                     setTagIds((v) => (on ? v.filter((x) => x !== t.id) : [...v, t.id]))
                   }
                   className={`rounded-full px-2 py-0.5 text-xs ${
-                    on ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-700'
+                    on ? 'bg-indigo-600 text-white' : 'bg-ink-700 text-ink-100'
                   }`}
                 >
                   {t.name}

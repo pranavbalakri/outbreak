@@ -16,10 +16,13 @@ async function call<T = unknown>(path: string, init: RequestInit = {}): Promise<
   const { token } = await readStorage('token');
   if (!token) throw new ApiError(401, 'no_token', 'Not signed in');
 
+  // Only attach Content-Type when there's a body — Fastify 400s on an empty
+  // body with Content-Type: application/json (bodyless POSTs like /timer/stop).
+  const hasBody = init.body !== undefined && init.body !== null;
   const res = await fetch(`${API_ORIGIN}${path}`, {
     ...init,
     headers: {
-      'Content-Type': 'application/json',
+      ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
       Authorization: `Bearer ${token}`,
       ...(init.headers ?? {}),
     },

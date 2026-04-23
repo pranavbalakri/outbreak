@@ -55,7 +55,7 @@ export function ExtensionConnectPage() {
 
   return (
     <div className="mx-auto mt-24 max-w-md">
-      <Card className="p-6 text-center text-sm text-slate-600">
+      <Card className="p-6 text-center text-sm text-ink-200">
         {error ? (
           <div className="text-red-600">{error}</div>
         ) : (

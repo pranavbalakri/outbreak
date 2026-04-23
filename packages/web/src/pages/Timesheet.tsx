@@ -86,13 +86,13 @@ export function TimesheetPage() {
         </div>
       </div>
 
-      <div className="mb-2 text-sm text-slate-500">
+      <div className="mb-2 text-sm text-ink-200">
         Week of{' '}
-        <span className="font-medium text-slate-700">
+        <span className="font-medium text-ink-100">
           {anchor.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
         </span>{' '}
         –{' '}
-        <span className="font-medium text-slate-700">
+        <span className="font-medium text-ink-100">
           {addDays(anchor, 6).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
         </span>
       </div>
@@ -100,12 +100,12 @@ export function TimesheetPage() {
       <Card className="overflow-hidden">
         <table className="w-full table-fixed border-collapse text-sm">
           <thead>
-            <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+            <tr className="border-b border-ink-400 bg-ink-900 text-xs uppercase tracking-wide text-ink-200">
               <th className="w-64 px-4 py-2 text-left font-semibold">Project</th>
               {days.map((d, i) => (
                 <th key={i} className="px-2 py-2 text-center font-semibold">
                   <div>{d.toLocaleDateString(undefined, { weekday: 'short' })}</div>
-                  <div className="font-normal text-slate-400">{d.getDate()}</div>
+                  <div className="font-normal text-ink-300">{d.getDate()}</div>
                 </th>
               ))}
               <th className="w-20 px-2 py-2 text-right font-semibold">Total</th>
@@ -129,12 +129,12 @@ export function TimesheetPage() {
             ))}
             {projectKeys.length === 0 && !hasUnassigned && (
               <tr>
-                <td colSpan={9} className="px-4 py-8 text-center text-sm text-slate-400">
+                <td colSpan={9} className="px-4 py-8 text-center text-sm text-ink-300">
                   No entries this week.
                 </td>
               </tr>
             )}
-            <tr className="border-t border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+            <tr className="border-t border-ink-400 bg-ink-900 text-xs uppercase tracking-wide text-ink-200">
               <td className="px-4 py-2 font-semibold">Daily total</td>
               {days.map((_, i) => (
                 <td key={i} className="px-2 py-2 text-center font-mono tabular-nums">
@@ -189,11 +189,11 @@ function UnassignedRow({
     .flat()
     .reduce((s, e) => s + durationMinutes(e.startedAt, e.endedAt), 0);
   return (
-    <tr className="border-b border-slate-200 bg-amber-50/40">
+    <tr className="border-b border-ink-400 bg-amber-50/40">
       <td className="px-4 py-3">
         <div className="flex items-center gap-2">
           <Badge tone="yellow">Unassigned</Badge>
-          <span className="text-xs text-slate-500">attach to a project →</span>
+          <span className="text-xs text-ink-200">attach to a project →</span>
         </div>
       </td>
       {entries.map((dayEntries, i) => (
@@ -217,7 +217,7 @@ function ProjectRow({
     .flat()
     .reduce((s, e) => s + durationMinutes(e.startedAt, e.endedAt), 0);
   return (
-    <tr className="border-b border-slate-100">
+    <tr className="border-b border-ink-500">
       <td className="px-4 py-3 font-medium">{name}</td>
       {entries.map((dayEntries, i) => (
         <DayCell key={i} entries={dayEntries} invalidate={invalidate} />
@@ -243,7 +243,7 @@ function DayCell({
       <button
         type="button"
         className={`w-full rounded px-2 py-2 text-center font-mono text-sm tabular-nums ${
-          total > 0 ? 'bg-slate-50 hover:bg-slate-100' : 'text-slate-300'
+          total > 0 ? 'bg-ink-900 hover:bg-ink-700' : 'text-ink-300'
         }`}
         onClick={() => total > 0 && setOpen((v) => !v)}
       >
@@ -252,7 +252,7 @@ function DayCell({
       {open && (
         <ul className="mt-1 space-y-1 text-left">
           {entries.map((e) => (
-            <li key={e.id} className="rounded bg-white p-1 text-xs shadow-sm">
+            <li key={e.id} className="rounded bg-ink-800/60 p-1 text-xs shadow-sm">
               <div className="flex items-center justify-between gap-2">
                 <span className="font-mono">
                   {formatMinutes(durationMinutes(e.startedAt, e.endedAt))}
@@ -267,7 +267,7 @@ function DayCell({
                     </button>
                   )}
                   <button
-                    className="text-slate-400 hover:text-red-600"
+                    className="text-ink-300 hover:text-red-600"
                     onClick={async () => {
                       try {
                         await deleteTimeEntry(e.id);
@@ -282,7 +282,7 @@ function DayCell({
                 </div>
               </div>
               {e.description && (
-                <div className="mt-0.5 truncate text-[10px] text-slate-500">
+                <div className="mt-0.5 truncate text-[10px] text-ink-200">
                   {e.description}
                 </div>
               )}

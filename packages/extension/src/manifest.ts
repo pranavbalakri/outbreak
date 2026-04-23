@@ -18,7 +18,9 @@ export default defineManifest({
     type: 'module',
   },
   // `idle` is intentionally absent — idle detection is out of scope per spec §4.2.
-  permissions: ['storage', 'alarms', 'notifications', 'activeTab'],
+  // `identity` powers chrome.identity.launchWebAuthFlow + getRedirectURL,
+  // which the popup uses to kick off Google OAuth via the web app.
+  permissions: ['storage', 'alarms', 'notifications', 'activeTab', 'identity'],
   host_permissions: [`${apiOrigin}/*`],
   commands: {
     'toggle-timer': {

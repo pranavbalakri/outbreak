@@ -41,7 +41,7 @@ export function FeedbackLauncher() {
       <Modal open={open} onClose={close} title="Send feedback">
         {sent ? (
           <div className="space-y-4">
-            <p className="text-sm text-slate-700">
+            <p className="text-sm text-ink-100">
               Thanks! Your feedback has been sent.
             </p>
             <div className="flex justify-end">

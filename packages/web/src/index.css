@@ -6,6 +6,12 @@
 
 html, body, #root { height: 100%; }
 
+/* Native form controls render dark (select dropdown options, date pickers,
+   color picker, etc) */
+html { color-scheme: dark; }
+select { @apply bg-ink-900 text-ink-100; }
+option { @apply bg-ink-800 text-ink-100; }
+
 body {
   @apply bg-ink-900 text-ink-100 antialiased font-sans;
   background-image:

@@ -182,7 +182,7 @@ export function ReportsPage() {
         </div>
       </div>
 
-      <div className="flex gap-2 border-b border-slate-200">
+      <div className="flex gap-2 border-b border-ink-400">
         {(['week', 'month', 'custom'] as const).map((t) => (
           <button
             key={t}
@@ -190,7 +190,7 @@ export function ReportsPage() {
             className={`border-b-2 px-4 py-2 text-sm ${
               tab === t
                 ? 'border-brand-600 text-brand-700 font-medium'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
+                : 'border-transparent text-ink-200 hover:text-ink-100'
             }`}
           >
             {t === 'week' ? '1 week' : t === 'month' ? '1 month' : 'Custom'}
@@ -276,7 +276,7 @@ export function ReportsPage() {
             </select>
           </Field>
           <Field label="Unassigned">
-            <label className="mt-2 inline-flex items-center gap-2 text-sm text-slate-700">
+            <label className="mt-2 inline-flex items-center gap-2 text-sm text-ink-100">
               <input
                 type="checkbox"
                 checked={includeUnassigned}
@@ -289,11 +289,11 @@ export function ReportsPage() {
       </Card>
 
       <Card className="p-4">
-        <h2 className="mb-3 text-sm font-semibold text-slate-700">Hours per day (by instructor)</h2>
+        <h2 className="mb-3 text-sm font-semibold text-ink-100">Hours per day (by instructor)</h2>
         {dailyQ.isLoading ? (
-          <div className="py-12 text-center text-sm text-slate-400">Loading…</div>
+          <div className="py-12 text-center text-sm text-ink-300">Loading…</div>
         ) : chartData.length === 0 ? (
-          <div className="py-12 text-center text-sm text-slate-400">No data in range.</div>
+          <div className="py-12 text-center text-sm text-ink-300">No data in range.</div>
         ) : (
           <div className="h-72 w-full">
             <ResponsiveContainer>
@@ -322,7 +322,7 @@ export function ReportsPage() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card className="p-4">
-          <h2 className="mb-3 text-sm font-semibold text-slate-700">Totals by instructor</h2>
+          <h2 className="mb-3 text-sm font-semibold text-ink-100">Totals by instructor</h2>
           <SummaryTable
             rows={byInstructorQ.data?.rows ?? []}
             totals={byInstructorQ.data?.totals}
@@ -330,7 +330,7 @@ export function ReportsPage() {
           />
         </Card>
         <Card className="p-4">
-          <h2 className="mb-3 text-sm font-semibold text-slate-700">Totals by project</h2>
+          <h2 className="mb-3 text-sm font-semibold text-ink-100">Totals by project</h2>
           <SummaryTable
             rows={byProjectQ.data?.rows ?? []}
             totals={byProjectQ.data?.totals}
@@ -342,16 +342,16 @@ export function ReportsPage() {
 
       {(tab === 'month' || tab === 'custom') && (
         <Card className="p-4">
-          <h2 className="mb-3 text-sm font-semibold text-slate-700">
+          <h2 className="mb-3 text-sm font-semibold text-ink-100">
             Projects — estimated vs. actual
           </h2>
           {projectsQ.isLoading ? (
-            <div className="py-8 text-center text-sm text-slate-400">Loading…</div>
+            <div className="py-8 text-center text-sm text-ink-300">Loading…</div>
           ) : (
             <div>
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
+                  <tr className="border-b border-ink-400 text-left text-xs uppercase text-ink-200">
                     <th className="py-2">Project</th>
                     <th className="py-2">Folder</th>
                     <th className="py-2 text-right">Estimated</th>
@@ -365,7 +365,7 @@ export function ReportsPage() {
                   {projectsQ.data?.rows.map((r) => (
                     <tr
                       key={r.projectId}
-                      className="border-b border-slate-100 last:border-none"
+                      className="border-b border-ink-500 last:border-none"
                     >
                       <td className="py-2">
                         <span className="font-medium">{r.name}</span>
@@ -375,7 +375,7 @@ export function ReportsPage() {
                           </span>
                         )}
                       </td>
-                      <td className="py-2 text-slate-600">{r.folderName}</td>
+                      <td className="py-2 text-ink-200">{r.folderName}</td>
                       <td className="py-2 text-right">{fmtMinutes(r.estimatedMinutes)}</td>
                       <td className="py-2 text-right">{fmtMinutes(r.actualMinutes)}</td>
                       <td
@@ -400,7 +400,7 @@ export function ReportsPage() {
                 </tbody>
               </table>
               {projectsQ.data && (
-                <div className="mt-4 rounded-md bg-slate-50 p-3 text-sm">
+                <div className="mt-4 rounded-md bg-ink-900 p-3 text-sm">
                   <span className="font-medium">Unassigned time:</span>{' '}
                   {fmtMinutes(projectsQ.data.unassigned.minutes)} —{' '}
                   {fmtCents(projectsQ.data.unassigned.costCents)}
@@ -411,7 +411,7 @@ export function ReportsPage() {
         </Card>
       )}
 
-      <div className="text-xs text-slate-400">
+      <div className="text-xs text-ink-300">
         Rates come from the snapshot on each time entry (never retroactive). Currency: USD.
       </div>
     </div>
@@ -430,14 +430,14 @@ function SummaryTable({
   unassignedFooter?: boolean | undefined;
 }) {
   if (rows.length === 0) {
-    return <div className="py-8 text-center text-sm text-slate-400">No data.</div>;
+    return <div className="py-8 text-center text-sm text-ink-300">No data.</div>;
   }
   const unassignedRow = rows.find((r) => r.isUnassigned);
   const normalRows = rows.filter((r) => !r.isUnassigned);
   return (
     <table className="w-full text-sm">
       <thead>
-        <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
+        <tr className="border-b border-ink-400 text-left text-xs uppercase text-ink-200">
           <th className="py-2">Name</th>
           <th className="py-2 text-right">Hours</th>
           <th className="py-2 text-right">Billable</th>
@@ -446,7 +446,7 @@ function SummaryTable({
       </thead>
       <tbody>
         {normalRows.map((r) => (
-          <tr key={r.key} className="border-b border-slate-100 last:border-none">
+          <tr key={r.key} className="border-b border-ink-500 last:border-none">
             <td className="py-2">{r.label}</td>
             <td className="py-2 text-right">{fmtMinutes(r.minutes)}</td>
             <td className="py-2 text-right">{fmtMinutes(r.billableMinutes)}</td>
@@ -454,8 +454,8 @@ function SummaryTable({
           </tr>
         ))}
         {unassignedFooter && unassignedRow && (
-          <tr className="border-b border-slate-100 bg-slate-50">
-            <td className="py-2 font-medium text-slate-700">Unassigned</td>
+          <tr className="border-b border-ink-500 bg-ink-900">
+            <td className="py-2 font-medium text-ink-100">Unassigned</td>
             <td className="py-2 text-right">{fmtMinutes(unassignedRow.minutes)}</td>
             <td className="py-2 text-right">{fmtMinutes(unassignedRow.billableMinutes)}</td>
             {showCost && <td className="py-2 text-right">{fmtCents(unassignedRow.costCents)}</td>}

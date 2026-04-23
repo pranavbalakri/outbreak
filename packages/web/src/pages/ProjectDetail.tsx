@@ -58,7 +58,7 @@ export function ProjectDetailPage() {
   const { data: tagData } = useQuery({ queryKey: ['tags'], queryFn: fetchTags });
 
   const project = projectData?.project;
-  if (!project) return <div className="text-sm text-slate-500">Loading…</div>;
+  if (!project) return <div className="text-sm text-ink-200">Loading…</div>;
 
   const actual = project.actualMinutes ?? 0;
   const pct =
@@ -77,7 +77,7 @@ export function ProjectDetailPage() {
   return (
     <div>
       <div className="mb-4 text-sm">
-        <Link to="/projects" className="text-slate-500 hover:underline">
+        <Link to="/projects" className="text-ink-200 hover:underline">
           ← Projects
         </Link>
       </div>
@@ -85,7 +85,7 @@ export function ProjectDetailPage() {
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">{project.name}</h1>
-          <div className="mt-1 flex items-center gap-2 text-sm text-slate-500">
+          <div className="mt-1 flex items-center gap-2 text-sm text-ink-200">
             <Badge>{project.status.replace('_', ' ').toLowerCase()}</Badge>
             <span>Due {formatDate(project.dueAt)}</span>
             {project.isOverEstimate && <Badge tone="yellow">Over estimate</Badge>}
@@ -111,7 +111,7 @@ export function ProjectDetailPage() {
       <Card className="mb-5 p-4">
         <div className="mb-2 flex items-center justify-between text-sm">
           <span className="font-medium">Estimate progress</span>
-          <span className="tabular-nums text-slate-500">
+          <span className="tabular-nums text-ink-200">
             {formatMinutes(actual)} / {formatMinutes(project.estimatedMinutes)} (
             {project.originalEstimatedMinutes !== project.estimatedMinutes && (
               <>original {formatMinutes(project.originalEstimatedMinutes)} · </>
@@ -120,7 +120,7 @@ export function ProjectDetailPage() {
             {formatMinutes(project.varianceMinutes ?? 0)})
           </span>
         </div>
-        <div className="h-2 w-full rounded-full bg-slate-100">
+        <div className="h-2 w-full rounded-full bg-ink-700">
           <div
             className={`h-full rounded-full ${
               project.isOverEstimate ? 'bg-yellow-500' : 'bg-brand-500'
@@ -134,7 +134,7 @@ export function ProjectDetailPage() {
       <div className="mb-5 grid gap-4 md:grid-cols-2">
         <Card className="p-4">
           <div className="mb-2 flex items-center justify-between">
-            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <div className="text-xs font-semibold uppercase tracking-wide text-ink-200">
               Assignees
             </div>
           </div>
@@ -147,7 +147,7 @@ export function ProjectDetailPage() {
         </Card>
         <Card className="p-4">
           <div className="mb-2 flex items-center justify-between">
-            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <div className="text-xs font-semibold uppercase tracking-wide text-ink-200">
               Tags
             </div>
           </div>
@@ -164,7 +164,7 @@ export function ProjectDetailPage() {
       </div>
 
       {/* Tabs */}
-      <div className="mb-3 flex gap-1 border-b border-slate-200">
+      <div className="mb-3 flex gap-1 border-b border-ink-400">
         {(['tasks', 'entries', 'notes'] as const).map((t) => (
           <button
             key={t}
@@ -173,7 +173,7 @@ export function ProjectDetailPage() {
             className={`px-3 py-2 text-sm ${
               tab === t
                 ? 'border-b-2 border-brand-600 font-medium text-brand-700'
-                : 'text-slate-500 hover:text-slate-700'
+                : 'text-ink-200 hover:text-ink-100'
             }`}
           >
             {t.charAt(0).toUpperCase() + t.slice(1)}
@@ -190,12 +190,12 @@ export function ProjectDetailPage() {
               </Button>
             </div>
           )}
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-ink-500">
             {(taskData?.tasks ?? []).map((t) => (
               <li key={t.id} className="flex items-center justify-between py-2">
                 <div>
                   <div className="text-sm font-medium">{t.name}</div>
-                  <div className="text-xs text-slate-500">
+                  <div className="text-xs text-ink-200">
                     {formatMinutes(t.estimatedMinutes)}
                     {t.originalEstimatedMinutes !== t.estimatedMinutes && (
                       <> (orig {formatMinutes(t.originalEstimatedMinutes)})</>
@@ -214,7 +214,7 @@ export function ProjectDetailPage() {
                   {isAdmin && (
                     <button
                       type="button"
-                      className="text-xs text-slate-400 hover:text-red-600"
+                      className="text-xs text-ink-300 hover:text-red-600"
                       onClick={async () => {
                         if (!window.confirm('Delete this task?')) return;
                         await deleteTask(t.id);
@@ -228,7 +228,7 @@ export function ProjectDetailPage() {
               </li>
             ))}
             {(taskData?.tasks ?? []).length === 0 && (
-              <li className="py-4 text-center text-sm text-slate-400">
+              <li className="py-4 text-center text-sm text-ink-300">
                 No tasks — this project tracks time directly.
               </li>
             )}
@@ -238,7 +238,7 @@ export function ProjectDetailPage() {
 
       {tab === 'entries' && (
         <Card className="p-4">
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-ink-500">
             {(entryData?.entries ?? []).map((e) => (
               <li key={e.id} className="flex items-center justify-between py-2 text-sm">
                 <div>
@@ -247,16 +247,16 @@ export function ProjectDetailPage() {
                     {e.endedAt ? formatTime(e.endedAt) : 'now'}
                   </div>
                   {e.description && (
-                    <div className="text-xs text-slate-500">{e.description}</div>
+                    <div className="text-xs text-ink-200">{e.description}</div>
                   )}
                 </div>
-                <div className="font-mono text-xs text-slate-500">
+                <div className="font-mono text-xs text-ink-200">
                   {formatMinutes(durationMinutes(e.startedAt, e.endedAt))}
                 </div>
               </li>
             ))}
             {(entryData?.entries ?? []).length === 0 && (
-              <li className="py-4 text-center text-sm text-slate-400">
+              <li className="py-4 text-center text-sm text-ink-300">
                 No entries logged yet.
               </li>
             )}
@@ -271,7 +271,7 @@ export function ProjectDetailPage() {
               <ReactMarkdown>{project.description}</ReactMarkdown>
             </div>
           ) : (
-            <div className="text-sm text-slate-400">No description yet.</div>
+            <div className="text-sm text-ink-300">No description yet.</div>
           )}
         </Card>
       )}
@@ -315,7 +315,7 @@ function AssigneesPanel({
   const available = users.filter((u) => !assignedSet.has(u.id));
 
   if (users.length === 0 && project.assigneeIds.length === 0) {
-    return <div className="text-xs text-slate-400">—</div>;
+    return <div className="text-xs text-ink-300">—</div>;
   }
 
   return (
@@ -325,13 +325,13 @@ function AssigneesPanel({
         return (
           <span
             key={uid}
-            className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs"
+            className="inline-flex items-center gap-1 rounded-full bg-ink-700 px-2 py-0.5 text-xs"
           >
             {u?.name ?? uid}
             {canEdit && (
               <button
                 type="button"
-                className="text-slate-400 hover:text-red-600"
+                className="text-ink-300 hover:text-red-600"
                 onClick={async () => {
                   await removeAssignee(project.id, uid);
                   onChange();
@@ -410,7 +410,7 @@ function TagsPanel({
       })}
       {canEdit && available.length > 0 && (
         <select
-          className="rounded-full bg-slate-100 px-2 py-0.5 text-xs"
+          className="rounded-full bg-ink-700 px-2 py-0.5 text-xs"
           defaultValue=""
           onChange={async (e) => {
             if (!e.target.value) return;
@@ -432,7 +432,7 @@ function TagsPanel({
       {canEdit && !creating && (
         <button
           type="button"
-          className="text-xs text-slate-400 hover:text-slate-700"
+          className="text-xs text-ink-300 hover:text-ink-100"
           onClick={() => setCreating(true)}
         >
           + new
@@ -452,7 +452,7 @@ function TagsPanel({
           }}
         >
           <input
-            className="rounded-full border border-slate-300 px-2 py-0.5 text-xs"
+            className="rounded-full border border-ink-400 px-2 py-0.5 text-xs"
             autoFocus
             value={name}
             onChange={(e) => setName(e.target.value)}

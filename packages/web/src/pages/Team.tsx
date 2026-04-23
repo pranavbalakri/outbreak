@@ -44,7 +44,7 @@ export function TeamPage() {
       <Card className="p-0">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
+            <tr className="border-b border-ink-400 text-left text-xs uppercase text-ink-200">
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Role</th>
@@ -55,9 +55,9 @@ export function TeamPage() {
           </thead>
           <tbody>
             {usersQ.data?.users.map((u) => (
-              <tr key={u.id} className="border-b border-slate-100 last:border-none">
+              <tr key={u.id} className="border-b border-ink-500 last:border-none">
                 <td className="px-4 py-3 font-medium">{u.name}</td>
-                <td className="px-4 py-3 text-slate-600">{u.email}</td>
+                <td className="px-4 py-3 text-ink-200">{u.email}</td>
                 <td className="px-4 py-3">
                   <Badge tone={u.role === 'ADMIN' ? 'indigo' : 'slate'}>{u.role}</Badge>
                 </td>
@@ -163,7 +163,7 @@ function EditUserModal({ user, onClose }: { user: UserDto; onClose: () => void }
             <option value="ADMIN">Admin</option>
           </select>
         </Field>
-        <label className="flex items-center gap-2 text-sm text-slate-700">
+        <label className="flex items-center gap-2 text-sm text-ink-100">
           <input
             type="checkbox"
             checked={rateVisibleToSelf}
@@ -177,7 +177,7 @@ function EditUserModal({ user, onClose }: { user: UserDto; onClose: () => void }
           </Button>
         </div>
 
-        <div className="border-t border-slate-200 pt-4">
+        <div className="border-t border-ink-400 pt-4">
           <h3 className="mb-2 text-sm font-semibold">Billing rate</h3>
           <div className="flex items-end gap-2">
             <Field label="New rate ($/hr)">
@@ -197,24 +197,24 @@ function EditUserModal({ user, onClose }: { user: UserDto; onClose: () => void }
               {saveRateM.isPending ? 'Updating…' : 'Update rate'}
             </Button>
           </div>
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-ink-200">
             Rate changes never touch past entries — historical time keeps the rate it was logged with.
           </p>
 
-          <h4 className="mt-4 text-xs font-semibold uppercase text-slate-500">
+          <h4 className="mt-4 text-xs font-semibold uppercase text-ink-200">
             Rate history
           </h4>
           {historyQ.data && historyQ.data.history.length > 0 ? (
             <table className="mt-2 w-full text-sm">
               <thead>
-                <tr className="text-left text-xs text-slate-500">
+                <tr className="text-left text-xs text-ink-200">
                   <th className="py-1">Effective from</th>
                   <th className="py-1 text-right">Rate</th>
                 </tr>
               </thead>
               <tbody>
                 {historyQ.data.history.map((h) => (
-                  <tr key={h.id} className="border-t border-slate-100">
+                  <tr key={h.id} className="border-t border-ink-500">
                     <td className="py-1">
                       {new Date(h.effectiveFrom).toLocaleString()}
                     </td>
@@ -224,7 +224,7 @@ function EditUserModal({ user, onClose }: { user: UserDto; onClose: () => void }
               </tbody>
             </table>
           ) : (
-            <p className="mt-2 text-xs text-slate-500">No recorded rate history.</p>
+            <p className="mt-2 text-xs text-ink-200">No recorded rate history.</p>
           )}
         </div>
       </div>
@@ -258,7 +258,7 @@ function InviteUserModal({ onClose }: { onClose: () => void }) {
   return (
     <Modal open onClose={onClose} title="Invite user">
       <div className="space-y-3">
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-ink-200">
           Create the user row now. Share the web app URL with them — their first
           successful Google sign-in will bind their Google account automatically.
         </p>

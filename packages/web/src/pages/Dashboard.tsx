@@ -68,7 +68,7 @@ export function DashboardPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Running timer */}
         <Card className="p-5 lg:col-span-1">
-          <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-ink-200">
             Timer
           </div>
           {active ? (
@@ -76,13 +76,13 @@ export function DashboardPage() {
               <div className="font-mono text-5xl tabular-nums text-emerald-900">
                 {formatElapsed(elapsedSeconds)}
               </div>
-              <div className="mt-2 text-sm text-slate-600">
+              <div className="mt-2 text-sm text-ink-200">
                 {active.projectId
                   ? (projectNameById.get(active.projectId) ?? 'Project')
                   : 'Unassigned time'}
               </div>
               {active.description && (
-                <div className="mt-1 text-xs text-slate-500">{active.description}</div>
+                <div className="mt-1 text-xs text-ink-200">{active.description}</div>
               )}
               <Button variant="danger" className="mt-4" onClick={() => void stop()}>
                 Stop
@@ -120,14 +120,14 @@ export function DashboardPage() {
         {/* Today's entries */}
         <Card className="p-5 lg:col-span-2">
           <div className="mb-3 flex items-center justify-between">
-            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <div className="text-xs font-semibold uppercase tracking-wide text-ink-200">
               Today's entries
             </div>
-            <div className="text-xs text-slate-400">
+            <div className="text-xs text-ink-300">
               {todayData?.entries.length ?? 0} entries
             </div>
           </div>
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-ink-500">
             {(todayData?.entries ?? []).map((entry) => (
               <EntryRow
                 key={entry.id}
@@ -140,7 +140,7 @@ export function DashboardPage() {
               />
             ))}
             {(todayData?.entries ?? []).length === 0 && (
-              <li className="py-6 text-center text-sm text-slate-400">
+              <li className="py-6 text-center text-sm text-ink-300">
                 No entries yet today.
               </li>
             )}
@@ -151,10 +151,10 @@ export function DashboardPage() {
       {/* Upcoming */}
       <div className="mt-6">
         <Card className="p-5">
-          <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-ink-200">
             Upcoming projects
           </div>
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-ink-500">
             {(upcomingData?.projects ?? []).map((p) => (
               <li key={p.id} className="flex items-center justify-between py-2">
                 <div className="flex items-center gap-2">
@@ -164,13 +164,13 @@ export function DashboardPage() {
                   {p.isOverdue && <Badge tone="red">Overdue</Badge>}
                   {p.isOverEstimate && <Badge tone="yellow">Over estimate</Badge>}
                 </div>
-                <div className="text-xs text-slate-500">
+                <div className="text-xs text-ink-200">
                   Due {new Date(p.dueAt).toLocaleDateString()}
                 </div>
               </li>
             ))}
             {(upcomingData?.projects ?? []).length === 0 && (
-              <li className="py-4 text-center text-sm text-slate-400">
+              <li className="py-4 text-center text-sm text-ink-300">
                 No upcoming projects.
               </li>
             )}
@@ -223,14 +223,14 @@ function EntryRow({
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">
               {entry.projectId ? (projectName ?? 'Project') : (
-                <span className="text-slate-500">Unassigned</span>
+                <span className="text-ink-200">Unassigned</span>
               )}
             </span>
             {!entry.endedAt && <Badge tone="green">Running</Badge>}
             {entry.source === 'EXTENSION' && <Badge tone="indigo">Extension</Badge>}
             {entry.source === 'MANUAL' && <Badge>Manual</Badge>}
           </div>
-          <div className="mt-0.5 text-xs text-slate-500">
+          <div className="mt-0.5 text-xs text-ink-200">
             {formatTime(entry.startedAt)} – {entry.endedAt ? formatTime(entry.endedAt) : 'now'} ·{' '}
             {formatMinutes(minutes)}
           </div>
@@ -250,11 +250,11 @@ function EntryRow({
             </div>
           ) : (
             <div
-              className="mt-1 cursor-text text-sm text-slate-600"
+              className="mt-1 cursor-text text-sm text-ink-200"
               onClick={() => setEditingNote(true)}
             >
               {entry.description || (
-                <span className="italic text-slate-400">click to add a note</span>
+                <span className="italic text-ink-300">click to add a note</span>
               )}
             </div>
           )}
@@ -290,7 +290,7 @@ function EntryRow({
             <button
               type="button"
               onClick={() => void onDelete()}
-              className="text-xs text-slate-400 hover:text-red-600"
+              className="text-xs text-ink-300 hover:text-red-600"
             >
               Delete
             </button>
