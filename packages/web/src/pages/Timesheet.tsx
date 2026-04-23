@@ -124,6 +124,7 @@ export function TimesheetPage() {
                 key={pid}
                 name={projectById.get(pid)?.name ?? '(deleted)'}
                 entries={grid.get(pid) ?? []}
+                onMove={setAttachingId}
                 invalidate={invalidate}
               />
             ))}
@@ -163,6 +164,7 @@ export function TimesheetPage() {
       )}
       {attachingId && (
         <AttachModal
+          entry={entryData?.entries.find((e) => e.id === attachingId) ?? null}
           entryId={attachingId}
           projects={projectData?.projects ?? []}
           onClose={() => setAttachingId(null)}
@@ -207,10 +209,12 @@ function UnassignedRow({
 function ProjectRow({
   name,
   entries,
+  onMove,
   invalidate,
 }: {
   name: string;
   entries: TimeEntryDto[][];
+  onMove: (id: string) => void;
   invalidate: () => void;
 }) {
   const totalRow = entries
@@ -220,7 +224,13 @@ function ProjectRow({
     <tr className="border-b border-ink-500">
       <td className="px-4 py-3 font-medium">{name}</td>
       {entries.map((dayEntries, i) => (
-        <DayCell key={i} entries={dayEntries} invalidate={invalidate} />
+        <DayCell
+          key={i}
+          entries={dayEntries}
+          onAttach={onMove}
+          attachLabel="move"
+          invalidate={invalidate}
+        />
       ))}
       <td className="px-2 text-right font-mono tabular-nums">{formatMinutes(totalRow)}</td>
     </tr>
@@ -230,10 +240,12 @@ function ProjectRow({
 function DayCell({
   entries,
   onAttach,
+  attachLabel = 'attach',
   invalidate,
 }: {
   entries: TimeEntryDto[];
   onAttach?: (id: string) => void;
+  attachLabel?: string;
   invalidate: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -260,10 +272,10 @@ function DayCell({
                 <div className="flex items-center gap-1">
                   {onAttach && (
                     <button
-                      className="text-brand-600 hover:text-brand-700"
+                      className="text-brand-300 hover:text-brand-200"
                       onClick={() => onAttach(e.id)}
                     >
-                      attach
+                      {attachLabel}
                     </button>
                   )}
                   <button
@@ -398,23 +410,33 @@ function AddTimeModal({
 }
 
 function AttachModal({
+  entry,
   entryId,
   projects,
   onClose,
   onAttached,
 }: {
+  entry: TimeEntryDto | null;
   entryId: string;
   projects: { id: string; name: string }[];
   onClose: () => void;
   onAttached: () => void;
 }) {
-  const [projectId, setProjectId] = useState('');
+  const isReassign = !!entry?.projectId;
+  // Start with the current project (or empty for unassigned entries) so the
+  // dropdown reflects the current state rather than asking you to re-pick.
+  const [projectId, setProjectId] = useState<string>(entry?.projectId ?? '');
   const mutation = useMutation({
-    mutationFn: () => updateTimeEntry(entryId, { projectId }),
+    mutationFn: () =>
+      updateTimeEntry(entryId, { projectId: projectId ? projectId : null }),
     onSuccess: onAttached,
   });
   return (
-    <Modal open onClose={onClose} title="Attach to project">
+    <Modal
+      open
+      onClose={onClose}
+      title={isReassign ? 'Change project' : 'Attach to project'}
+    >
       <div className="space-y-3">
         <Field label="Project">
           <select
@@ -422,9 +444,7 @@ function AttachModal({
             value={projectId}
             onChange={(e) => setProjectId(e.target.value)}
           >
-            <option value="" disabled>
-              Choose…
-            </option>
+            <option value="">— No project (general time) —</option>
             {projects.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
@@ -436,8 +456,13 @@ function AttachModal({
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={() => mutation.mutate()} disabled={!projectId || mutation.isPending}>
-            Attach
+          <Button
+            onClick={() => mutation.mutate()}
+            disabled={
+              mutation.isPending || (entry?.projectId ?? '') === projectId
+            }
+          >
+            {isReassign ? 'Save' : 'Attach'}
           </Button>
         </div>
       </div>
