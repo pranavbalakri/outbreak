@@ -14,9 +14,7 @@ export function LoginPage() {
     <div className="flex min-h-screen items-center justify-center px-6">
       <div className="w-full max-w-md">
         <div className="mb-6 flex items-center gap-3">
-          <div className="relative flex h-10 w-10 items-center justify-center border border-dashed border-brand-500/60">
-            <span className="font-mono text-xs font-bold text-brand-400">OB</span>
-          </div>
+          <img src="/outbreak-logo.png" alt="Outbreak" className="h-10 w-10" />
         </div>
 
         <h1 className="font-sans text-5xl font-bold tracking-tight">

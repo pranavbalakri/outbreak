@@ -17,13 +17,7 @@ const NAV = [
 function LogoMark() {
   return (
     <div className="flex items-center gap-3">
-      <div className="relative flex h-9 w-9 items-center justify-center border border-dashed border-brand-500/60">
-        <span className="font-mono text-xs font-bold text-brand-400">OB</span>
-        <span className="absolute -left-[3px] -top-[3px] h-1.5 w-1.5 border-l border-t border-brand-400" />
-        <span className="absolute -right-[3px] -top-[3px] h-1.5 w-1.5 border-r border-t border-brand-400" />
-        <span className="absolute -bottom-[3px] -left-[3px] h-1.5 w-1.5 border-b border-l border-brand-400" />
-        <span className="absolute -bottom-[3px] -right-[3px] h-1.5 w-1.5 border-b border-r border-brand-400" />
-      </div>
+      <img src="/outbreak-logo.png" alt="Outbreak" className="h-9 w-9" />
       <div className="leading-none">
         <div className="font-sans text-xl font-bold tracking-tight">
           outbreak<span className="text-brand-500">.</span>
