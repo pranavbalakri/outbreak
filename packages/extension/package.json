@@ -1,0 +1,28 @@
+{
+  "name": "@outbreak/extension",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build && node scripts/zip.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@outbreak/shared": "workspace:*",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@crxjs/vite-plugin": "2.0.0-beta.25",
+    "@types/chrome": "^0.1.40",
+    "@types/react": "^18.3.28",
+    "@types/react-dom": "^18",
+    "@vitejs/plugin-react": "^4.7.0",
+    "autoprefixer": "^10.5.0",
+    "postcss": "^8.5.10",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5.7.2",
+    "vite": "^6.4.2"
+  }
+}

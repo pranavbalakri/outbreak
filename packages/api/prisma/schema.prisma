@@ -1,0 +1,312 @@
+// Prisma schema for Outbreak.
+// Entities mirror §6 of spec.md; cross-cutting notes from plan.md:
+//   - Soft-delete (deleted_at) on every business entity.
+//   - Money stored as integer cents.
+//   - All timestamps UTC in the DB; rendered in user tz at the edges.
+//   - One active TimeEntry per user is enforced via a partial unique index
+//     in a follow-up SQL migration (Prisma can't express it in the schema).
+//   - `TimeEntry.ended_at IS NULL OR ended_at > started_at` is enforced via
+//     a DB-level CHECK constraint added in the same follow-up SQL migration.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  INSTRUCTOR
+}
+
+enum ProjectStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  BLOCKED
+  COMPLETE
+  ARCHIVED
+}
+
+enum TimeEntrySource {
+  WEB
+  EXTENSION
+  MANUAL
+}
+
+model User {
+  id                   String    @id @default(cuid())
+  name                 String
+  email                String    @unique
+  googleSub            String?   @unique @map("google_sub")
+  avatarUrl            String?   @map("avatar_url")
+  role                 Role      @default(INSTRUCTOR)
+  currentRateCents     Int       @default(0) @map("current_rate_cents")
+  rateVisibleToSelf    Boolean   @default(true) @map("rate_visible_to_self")
+  isActive             Boolean   @default(true) @map("is_active")
+  timezone             String    @default("America/New_York")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+  deletedAt            DateTime? @map("deleted_at")
+
+  timeEntries          TimeEntry[]
+  assignments          ProjectAssignment[]
+  taskAssignments      TaskAssignment[]
+  apiTokens            ApiToken[]
+  rateHistory          RateHistory[]
+  createdProjects      Project[]           @relation("ProjectCreatedBy")
+  weekLocks            WeekLock[]
+  notifications        Notification[]
+  feedback             Feedback[]
+
+  @@map("users")
+}
+
+model ApiToken {
+  id          String    @id @default(cuid())
+  userId      String    @map("user_id")
+  tokenHash   String    @unique @map("token_hash")
+  label       String?
+  source      String    // "extension", "cli", etc.
+  createdAt   DateTime  @default(now()) @map("created_at")
+  lastUsedAt  DateTime? @map("last_used_at")
+  revokedAt   DateTime? @map("revoked_at")
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("api_tokens")
+}
+
+model RateHistory {
+  id            String   @id @default(cuid())
+  userId        String   @map("user_id")
+  rateCents     Int      @map("rate_cents")
+  effectiveFrom DateTime @map("effective_from")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, effectiveFrom])
+  @@map("rate_history")
+}
+
+model Folder {
+  id          String    @id @default(cuid())
+  name        String
+  color       String?
+  archivedAt  DateTime? @map("archived_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  projects    Project[]
+
+  @@map("folders")
+}
+
+model Project {
+  id                       String        @id @default(cuid())
+  folderId                 String        @map("folder_id")
+  name                     String
+  description              String?
+  estimatedMinutes         Int           @map("estimated_minutes")
+  // Snapshot of estimated_minutes at creation time. Immutable afterwards — no
+  // route mutates it. Used for "original variance" reporting while the live
+  // estimated_minutes is editable.
+  originalEstimatedMinutes Int           @map("original_estimated_minutes")
+  dueAt                    DateTime?     @map("due_at")
+  status                   ProjectStatus @default(NOT_STARTED)
+  createdByUserId          String        @map("created_by_user_id")
+  createdAt                DateTime      @default(now()) @map("created_at")
+  updatedAt                DateTime      @updatedAt @map("updated_at")
+  deletedAt                DateTime?     @map("deleted_at")
+
+  folder                   Folder              @relation(fields: [folderId], references: [id])
+  createdBy                User                @relation("ProjectCreatedBy", fields: [createdByUserId], references: [id])
+  tasks                    Task[]
+  timeEntries              TimeEntry[]
+  assignments              ProjectAssignment[]
+  projectTags              ProjectTag[]
+
+  @@index([folderId])
+  @@index([status])
+  @@map("projects")
+}
+
+model Task {
+  id                       String        @id @default(cuid())
+  projectId                String        @map("project_id")
+  name                     String
+  estimatedMinutes         Int           @map("estimated_minutes")
+  // Snapshot of estimated_minutes at creation time. Immutable afterwards — no
+  // route mutates it. Used for "original variance" reporting while the live
+  // estimated_minutes is editable.
+  originalEstimatedMinutes Int           @map("original_estimated_minutes")
+  dueAt                    DateTime?     @map("due_at")
+  status                   ProjectStatus @default(NOT_STARTED)
+  createdAt                DateTime      @default(now()) @map("created_at")
+  updatedAt                DateTime      @updatedAt @map("updated_at")
+  deletedAt                DateTime?     @map("deleted_at")
+
+  project                  Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  timeEntries              TimeEntry[]
+  assignments              TaskAssignment[]
+
+  @@index([projectId])
+  @@map("tasks")
+}
+
+model TaskAssignment {
+  id        String   @id @default(cuid())
+  taskId    String   @map("task_id")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, userId])
+  @@index([userId])
+  @@map("task_assignments")
+}
+
+model ProjectAssignment {
+  id         String   @id @default(cuid())
+  projectId  String   @map("project_id")
+  userId     String   @map("user_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([userId])
+  @@map("project_assignments")
+}
+
+model TimeEntry {
+  id                String          @id @default(cuid())
+  userId            String          @map("user_id")
+  projectId         String?         @map("project_id") // nullable — unassigned/general time
+  taskId            String?         @map("task_id")
+  startedAt         DateTime        @map("started_at")
+  endedAt           DateTime?       @map("ended_at")
+  description       String?
+  isBillable        Boolean         @default(true) @map("is_billable")
+  locked            Boolean         @default(false)
+  rateCentsAtEntry  Int             @map("rate_cents_at_entry")
+  source            TimeEntrySource
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+  deletedAt         DateTime?       @map("deleted_at")
+
+  user              User            @relation(fields: [userId], references: [id])
+  project           Project?        @relation(fields: [projectId], references: [id])
+  task              Task?           @relation(fields: [taskId], references: [id])
+
+  @@index([userId, startedAt])
+  @@index([projectId])
+  @@index([taskId])
+  @@map("time_entries")
+}
+
+model Tag {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  createdAt   DateTime     @default(now()) @map("created_at")
+  deletedAt   DateTime?    @map("deleted_at")
+
+  projectTags ProjectTag[]
+
+  @@map("tags")
+}
+
+model ProjectTag {
+  projectId String   @map("project_id")
+  tagId     String   @map("tag_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, tagId])
+  @@index([tagId])
+  @@map("project_tags")
+}
+
+model AuthAttempt {
+  id        String   @id @default(cuid())
+  email     String?
+  ip        String?
+  success   Boolean
+  reason    String?  // e.g. unknown_user, state_mismatch, email_not_verified, success
+  userId    String?  @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([email, createdAt])
+  @@index([ip, createdAt])
+  @@map("auth_attempts")
+}
+
+model WeekLock {
+  id             String   @id @default(cuid())
+  isoYear        Int      @map("iso_year")
+  isoWeek        Int      @map("iso_week")
+  lockedByUserId String   @map("locked_by_user_id")
+  lockedAt       DateTime @default(now()) @map("locked_at")
+
+  lockedBy       User     @relation(fields: [lockedByUserId], references: [id])
+
+  @@unique([isoYear, isoWeek])
+  @@map("week_locks")
+}
+
+// Audit log for write actions with payroll/legal weight: week lock/unlock,
+// rate changes, user deactivation, token revocation. Not every write.
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?  @map("actor_id")
+  action     String   // e.g. "week.lock", "week.unlock", "rate.update", "token.revoke"
+  targetType String?  @map("target_type")
+  targetId   String?  @map("target_id")
+  payload    Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([action, createdAt])
+  @@index([actorId, createdAt])
+  @@map("audit_logs")
+}
+
+// Post-launch feedback intake. Written by any authed user via POST /feedback;
+// read by admins in Settings. No soft-delete — low-volume and worth keeping
+// the full record.
+model Feedback {
+  id          String    @id @default(cuid())
+  userId      String    @map("user_id")
+  message     String
+  pageUrl     String?   @map("page_url")
+  resolvedAt  DateTime? @map("resolved_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([resolvedAt, createdAt])
+  @@map("feedback")
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  kind      String    // e.g. "project.assigned", "project.overdue", "week.locked"
+  payload   Json
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, createdAt])
+  @@map("notifications")
+}

@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: outbreak-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: outbreak
+      POSTGRES_PASSWORD: outbreak
+      POSTGRES_DB: outbreak
+    ports:
+      - "5433:5432"
+    volumes:
+      - outbreak_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U outbreak -d outbreak"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  outbreak_postgres_data:
