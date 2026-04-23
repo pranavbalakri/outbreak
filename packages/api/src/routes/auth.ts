@@ -245,10 +245,14 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
       }
 
       const session = await signSession({ sub: user.id, role: user.role });
+      const isProd = env.NODE_ENV === 'production';
       reply.setCookie(SESSION_CONFIG.cookieName, session, {
         httpOnly: true,
-        secure: env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        secure: isProd,
+        // In prod the API and web live on different registrable domains
+        // (fly.dev vs. vercel.app), so the session cookie is cross-site.
+        // SameSite=None (with Secure) is the only combo browsers will send.
+        sameSite: isProd ? 'none' : 'lax',
         signed: false,
         path: '/',
         maxAge: SESSION_CONFIG.ttlSeconds,
@@ -268,7 +272,13 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
   );
 
   app.post('/auth/logout', async (_request, reply) => {
-    reply.clearCookie(SESSION_CONFIG.cookieName, { path: '/' });
+    const env = loadEnv();
+    const isProd = env.NODE_ENV === 'production';
+    reply.clearCookie(SESSION_CONFIG.cookieName, {
+      path: '/',
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
+    });
     return { ok: true };
   });
 

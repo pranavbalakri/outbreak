@@ -6,11 +6,14 @@ export function Button({
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'danger' }) {
   const base =
-    'inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed';
+    'inline-flex items-center justify-center rounded-sm px-3 py-1.5 text-sm font-medium font-mono tracking-wide transition disabled:opacity-40 disabled:cursor-not-allowed';
   const variants = {
-    primary: 'bg-brand-600 text-white hover:bg-brand-700',
-    secondary: 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50',
-    danger: 'bg-white text-red-600 border border-red-200 hover:bg-red-50',
+    primary:
+      'bg-brand-500 text-white hover:bg-brand-400 shadow-[0_0_0_1px_rgba(26,115,255,0.4),0_0_24px_-6px_rgba(26,115,255,0.7)]',
+    secondary:
+      'bg-transparent text-ink-100 border border-ink-300 hover:border-brand-500 hover:text-brand-200',
+    danger:
+      'bg-transparent text-red-400 border border-red-500/40 hover:border-red-400 hover:bg-red-500/10',
   };
   return <button {...props} className={`${base} ${variants[variant]} ${className}`} />;
 }
@@ -19,7 +22,17 @@ export function Card({ className = '', ...props }: HTMLAttributes<HTMLDivElement
   return (
     <div
       {...props}
-      className={`rounded-lg border border-slate-200 bg-white shadow-sm ${className}`}
+      className={`relative rounded-sm border border-ink-400 bg-ink-800/70 backdrop-blur-sm ${className}`}
+    />
+  );
+}
+
+/** Decorative tile with dashed blue border — matches the reference's dotted boxes. */
+export function DashTile({ className = '', ...props }: HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      {...props}
+      className={`relative rounded-sm border border-dashed border-brand-500/40 bg-ink-800/40 ${className}`}
     />
   );
 }
@@ -38,19 +51,20 @@ export function Modal({
   if (!open) return null;
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl"
+        className="w-full max-w-lg rounded-sm border border-ink-400 bg-ink-800 p-6 shadow-[0_0_0_1px_rgba(26,115,255,0.2),0_20px_80px_rgba(0,0,0,0.6)]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">{title}</h2>
+          <h2 className="tk text-sm text-ink-100">{title}</h2>
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600"
+            className="text-ink-200 hover:text-ink-100"
+            aria-label="Close"
           >
             ✕
           </button>
@@ -72,15 +86,15 @@ export function Field({
 }) {
   return (
     <label className="block">
-      <div className="mb-1 text-sm font-medium text-slate-700">{label}</div>
+      <div className="tk-sm mb-1.5">{label}</div>
       {children}
-      {hint && <div className="mt-1 text-xs text-slate-500">{hint}</div>}
+      {hint && <div className="mt-1 text-xs text-ink-200">{hint}</div>}
     </label>
   );
 }
 
 export const inputClass =
-  'block w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500';
+  'block w-full rounded-sm border border-ink-400 bg-ink-900/60 px-3 py-1.5 text-sm text-ink-100 placeholder:text-ink-300 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/40';
 
 export function Badge({
   tone = 'slate',
@@ -90,14 +104,16 @@ export function Badge({
   children: ReactNode;
 }) {
   const tones = {
-    slate: 'bg-slate-100 text-slate-700',
-    red: 'bg-red-100 text-red-800',
-    yellow: 'bg-yellow-100 text-yellow-800',
-    green: 'bg-emerald-100 text-emerald-800',
-    indigo: 'bg-indigo-100 text-indigo-800',
+    slate: 'bg-ink-600 text-ink-100 border-ink-400',
+    red: 'bg-red-500/10 text-red-300 border-red-500/40',
+    yellow: 'bg-amber-500/10 text-amber-300 border-amber-500/40',
+    green: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/40',
+    indigo: 'bg-brand-500/10 text-brand-300 border-brand-500/40',
   };
   return (
-    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs ${tones[tone]}`}>
+    <span
+      className={`inline-flex items-center rounded-sm border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider ${tones[tone]}`}
+    >
       {children}
     </span>
   );

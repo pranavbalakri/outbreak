@@ -11,6 +11,7 @@ describe('LoginPage', () => {
       </MemoryRouter>,
     );
     const link = screen.getByRole('link', { name: /sign in with google/i });
+    // Label reads "[ sign in with google ]" under the terminal theme; case-insensitive regex above still matches.
     expect(link).toBeInTheDocument();
     expect(link.getAttribute('href')).toContain('/auth/google/start');
   });
