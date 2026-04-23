@@ -73,7 +73,7 @@ export function DashboardPage() {
           </div>
           {active ? (
             <div>
-              <div className="font-mono text-5xl tabular-nums text-emerald-900">
+              <div className="font-mono text-5xl tabular-nums text-brand-200">
                 {formatElapsed(elapsedSeconds)}
               </div>
               <div className="mt-2 text-sm text-ink-200">
