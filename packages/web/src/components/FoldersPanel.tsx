@@ -160,7 +160,6 @@ export function FoldersPanel() {
               <th className="py-2">Name</th>
               <th className="py-2">Parent</th>
               <th className="py-2">Color</th>
-              <th className="py-2">Status</th>
               <th className="py-2"></th>
             </tr>
           </thead>
@@ -181,13 +180,6 @@ export function FoldersPanel() {
                       />
                     )}{' '}
                     <code className="text-xs text-ink-200">{f.color ?? '—'}</code>
-                  </td>
-                  <td className="py-2">
-                    {f.archivedAt ? (
-                      <Badge tone="slate">Archived</Badge>
-                    ) : (
-                      <Badge tone="green">Active</Badge>
-                    )}
                   </td>
                   <td className="py-2 text-right">
                     <div className="flex justify-end gap-2">
@@ -212,7 +204,7 @@ export function FoldersPanel() {
             })}
             {folders.length === 0 && (
               <tr>
-                <td colSpan={5} className="py-6 text-center text-sm text-ink-300">
+                <td colSpan={4} className="py-6 text-center text-sm text-ink-300">
                   No folders yet.
                 </td>
               </tr>
