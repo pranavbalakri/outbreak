@@ -1,15 +1,18 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { ProjectDto, TimeEntryDto } from '@outbreak/shared';
+import { useCallback, useEffect, useState } from 'react';
+import type { FolderDto, ProjectDto, TimeEntryDto } from '@outbreak/shared';
 import { WEB_ORIGIN } from '../lib/config.js';
 import { readStorage, writeStorage, clearSession } from '../lib/storage.js';
 import {
   ApiError,
   fetchAssignedProjects,
   fetchCurrentTimer,
+  fetchFolders,
   fetchMe,
   startTimer,
   stopTimer,
+  updateTimeEntry,
 } from '../lib/api.js';
+import { ProjectPicker } from './ProjectPicker.js';
 
 type Status = 'loading' | 'signed-out' | 'signed-in' | 'error';
 
@@ -19,26 +22,26 @@ interface PopupState {
   userName?: string;
   timer: TimeEntryDto | null;
   projects: ProjectDto[];
+  folders: FolderDto[];
   mruProjectId: string | null | undefined;
-  mruProjectName: string | null | undefined;
 }
 
 const INITIAL: PopupState = {
   status: 'loading',
   timer: null,
   projects: [],
+  folders: [],
   mruProjectId: undefined,
-  mruProjectName: undefined,
 };
 
 function fmtElapsed(startedAt: string): string {
   const seconds = Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000);
   if (seconds < 0) return '0:00';
-  const m = Math.floor(seconds / 60);
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
-  if (m < 60) return `${m}:${String(s).padStart(2, '0')}`;
-  const h = Math.floor(m / 60);
-  return `${h}h ${m % 60}m`;
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  return `${m}:${String(s).padStart(2, '0')}`;
 }
 
 async function activeTabNote(): Promise<string | undefined> {
@@ -53,20 +56,19 @@ async function activeTabNote(): Promise<string | undefined> {
 
 export function Popup() {
   const [state, setState] = useState<PopupState>(INITIAL);
-  const [query, setQuery] = useState('');
   const [online, setOnline] = useState(navigator.onLine);
-  const [actionInFlight, setActionInFlight] = useState(false);
-  const [, forceTick] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [, tick] = useState(0);
+  // Draft project selection while no timer is running.
+  const [draftProjectId, setDraftProjectId] = useState<string | null>(null);
+  const [description, setDescription] = useState('');
 
-  // Re-render every second while a timer is running so the elapsed count updates.
   useEffect(() => {
     if (!state.timer || state.timer.endedAt) return;
-    const h = setInterval(() => forceTick((n) => n + 1), 1000);
+    const h = setInterval(() => tick((n) => n + 1), 1000);
     return () => clearInterval(h);
   }, [state.timer]);
 
-  // Online/offline listener — the service worker also tracks this, but the
-  // popup needs its own read for instant paint.
   useEffect(() => {
     const on = () => setOnline(true);
     const off = () => setOnline(false);
@@ -79,29 +81,27 @@ export function Popup() {
   }, []);
 
   const refresh = useCallback(async () => {
-    const { token, mruProjectId, mruProjectName } = await readStorage(
-      'token',
-      'mruProjectId',
-      'mruProjectName',
-    );
+    const { token, mruProjectId } = await readStorage('token', 'mruProjectId');
     if (!token) {
       setState({ ...INITIAL, status: 'signed-out' });
       return;
     }
     try {
-      const [me, timer, projects] = await Promise.all([
+      const [me, timer, projects, folders] = await Promise.all([
         fetchMe(),
         fetchCurrentTimer(),
         fetchAssignedProjects(),
+        fetchFolders(),
       ]);
       setState({
         status: 'signed-in',
         userName: me.user.name,
         timer: timer.entry,
         projects: projects.projects,
-        mruProjectId,
-        mruProjectName,
+        folders: folders.folders,
+        mruProjectId: mruProjectId ?? undefined,
       });
+      setDraftProjectId(mruProjectId ?? null);
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         await clearSession();
@@ -129,19 +129,14 @@ export function Popup() {
     try {
       const redirectUrl = chrome.identity.getRedirectURL();
       const url = `${WEB_ORIGIN}/extension/connect?redirect=${encodeURIComponent(redirectUrl)}`;
-      const result = await chrome.identity.launchWebAuthFlow({
-        url,
-        interactive: true,
-      });
+      const result = await chrome.identity.launchWebAuthFlow({ url, interactive: true });
       if (!result) throw new Error('Sign-in was cancelled');
       const hashIndex = result.indexOf('#');
       const fragment = hashIndex >= 0 ? result.slice(hashIndex + 1) : '';
       const params = new URLSearchParams(fragment);
       const token = params.get('token');
       if (!token) throw new Error('No token in redirect URL');
-
       await writeStorage({ token });
-      // Storage change listener above picks it up and re-renders.
     } catch (err) {
       setState((s) => ({ ...s, status: 'error', errorMessage: (err as Error).message }));
     }
@@ -152,64 +147,72 @@ export function Popup() {
     setState({ ...INITIAL, status: 'signed-out' });
   };
 
-  const doStart = async (project: ProjectDto | null) => {
-    setActionInFlight(true);
+  const doStart = async () => {
+    setBusy(true);
     try {
-      const description = await activeTabNote();
+      const projectName = state.projects.find((p) => p.id === draftProjectId)?.name ?? null;
+      const pageNote = description.trim() || (await activeTabNote());
       const { entry } = await startTimer({
-        projectId: project?.id ?? null,
-        ...(description ? { description } : {}),
+        projectId: draftProjectId,
+        ...(pageNote ? { description: pageNote } : {}),
       });
       await writeStorage({
-        mruProjectId: project?.id ?? null,
-        mruProjectName: project?.name ?? null,
+        mruProjectId: draftProjectId,
+        mruProjectName: projectName,
       });
-      setState((s) => ({
-        ...s,
-        timer: entry,
-        mruProjectId: project?.id ?? null,
-        mruProjectName: project?.name ?? null,
-      }));
+      setState((s) => ({ ...s, timer: entry, mruProjectId: draftProjectId }));
+      setDescription('');
     } catch (err) {
       setState((s) => ({ ...s, errorMessage: (err as Error).message }));
     } finally {
-      setActionInFlight(false);
+      setBusy(false);
     }
   };
 
   const doStop = async () => {
-    setActionInFlight(true);
+    setBusy(true);
     try {
       await stopTimer();
       setState((s) => ({ ...s, timer: null }));
     } catch (err) {
       setState((s) => ({ ...s, errorMessage: (err as Error).message }));
     } finally {
-      setActionInFlight(false);
+      setBusy(false);
     }
   };
 
-  const filteredProjects = useMemo(() => {
-    if (!query) return state.projects;
-    const q = query.toLowerCase();
-    return state.projects.filter((p) => p.name.toLowerCase().includes(q));
-  }, [state.projects, query]);
+  // Editing project on the running timer.
+  const onRunningProjectChange = async (next: string | null) => {
+    if (!state.timer) return;
+    setBusy(true);
+    try {
+      const { entry } = await updateTimeEntry(state.timer.id, { projectId: next });
+      setState((s) => ({ ...s, timer: entry }));
+    } catch (err) {
+      setState((s) => ({ ...s, errorMessage: (err as Error).message }));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   if (state.status === 'loading') {
-    return <Shell>Loading…</Shell>;
+    return <Shell>
+      <div className="flex h-32 items-center justify-center text-sm text-ink-200">
+        Loading…
+      </div>
+    </Shell>;
   }
 
   if (state.status === 'signed-out') {
     return (
       <Shell>
-        <div className="px-4 py-6 text-center">
-          <div className="mb-4 text-lg font-semibold text-white">Outbreak</div>
-          <div className="mb-4 text-sm text-slate-400">
-            Sign in with your Google account to start tracking research time.
-          </div>
+        <div className="flex flex-col items-center px-5 py-8 text-center">
+          <img src="/src/icons/icon48.png" alt="" className="mb-3 h-10 w-10" />
+          <div className="text-base font-semibold">Outbreak</div>
+          <div className="mt-1 text-xs text-ink-200">For Break Debate</div>
           <button
             onClick={() => void signIn()}
-            className="w-full rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+            className="mt-6 w-full rounded-md border border-ink-400 bg-ink-800 px-4 py-2 text-sm font-medium text-ink-100 transition-colors hover:bg-ink-700"
           >
             Sign in with Google
           </button>
@@ -221,93 +224,122 @@ export function Popup() {
     );
   }
 
+  const running = state.timer && !state.timer.endedAt;
+
   return (
     <Shell>
       {!online && (
-        <div className="border-b border-red-900/50 bg-red-950 px-4 py-2 text-xs text-red-300">
-          Offline — timer state may be stale. Reconnect to change it.
+        <div className="border-b border-ink-400 bg-red-500/10 px-4 py-1.5 text-xs text-red-300">
+          Offline — timer state may be stale.
         </div>
       )}
 
-      <header className="flex items-center justify-between border-b border-slate-800 px-4 py-2">
-        <div className="text-sm font-semibold text-white">Outbreak</div>
+      <header className="flex items-center justify-between border-b border-ink-400 px-4 py-2.5">
+        <div className="flex items-center gap-2">
+          <img src="/src/icons/icon48.png" alt="" className="h-5 w-5" />
+          <span className="text-sm font-semibold">outbreak</span>
+        </div>
         <button
           onClick={() => void signOut()}
-          className="text-xs text-slate-400 hover:text-white"
+          className="rounded-md px-1.5 py-0.5 text-xs text-ink-200 transition-colors hover:bg-ink-700 hover:text-ink-100"
         >
           Sign out
         </button>
       </header>
 
-      {state.timer && !state.timer.endedAt ? (
-        <section className="border-b border-slate-800 px-4 py-4">
-          <div className="text-xs uppercase text-slate-400">Running</div>
-          <div className="mt-1 flex items-baseline gap-3">
-            <div className="font-mono text-2xl text-white">
-              {fmtElapsed(state.timer.startedAt)}
+      <section className="space-y-3 px-4 py-4">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            disabled={!online || busy}
+            onClick={() => void (running ? doStop() : doStart())}
+            aria-label={running ? 'Stop timer' : 'Start timer'}
+            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-ink-900 disabled:opacity-50 ${
+              running
+                ? 'bg-red-500 hover:bg-red-400 focus:ring-red-400/60'
+                : 'bg-brand-500 hover:bg-brand-400 focus:ring-brand-400/60'
+            }`}
+          >
+            {running ? (
+              <span className="block h-4 w-4 rounded-[2px] bg-white" />
+            ) : (
+              <span
+                className="block h-0 w-0 border-y-[8px] border-l-[13px] border-y-transparent border-l-white"
+                style={{ marginLeft: 2 }}
+              />
+            )}
+          </button>
+          <div className="min-w-0 flex-1">
+            <div
+              className={`font-mono tabular-nums text-2xl ${
+                running ? 'text-brand-200' : 'text-ink-200'
+              }`}
+            >
+              {state.timer ? fmtElapsed(state.timer.startedAt) : '0:00'}
             </div>
-            <div className="truncate text-sm text-slate-300">
-              {state.timer.projectId
-                ? state.projects.find((p) => p.id === state.timer?.projectId)?.name ??
-                  'Project'
-                : 'General time'}
+            <div className="truncate text-xs text-ink-300">
+              {running
+                ? state.timer!.projectId
+                  ? state.projects.find((p) => p.id === state.timer!.projectId)?.name ??
+                    'Project'
+                  : 'General time'
+                : 'Ready to start'}
             </div>
           </div>
-          <button
-            onClick={() => void doStop()}
-            disabled={!online || actionInFlight}
-            className="mt-3 w-full rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
-          >
-            Stop
-          </button>
-        </section>
-      ) : (
-        <section className="border-b border-slate-800 px-4 py-3 text-sm text-slate-400">
-          Not running. Pick a project below.
-        </section>
-      )}
+        </div>
 
-      <div className="px-4 py-3">
-        <input
-          className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm text-white placeholder:text-slate-500 focus:border-brand-500 focus:outline-none"
-          placeholder="Search projects…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-      </div>
-
-      <ul className="max-h-72 overflow-y-auto border-t border-slate-800">
-        <li>
-          <button
-            onClick={() => void doStart(null)}
-            disabled={!online || actionInFlight || !!state.timer}
-            className="flex w-full items-center justify-between border-b border-slate-800 px-4 py-2 text-left text-sm text-slate-200 hover:bg-slate-800 disabled:opacity-40"
-          >
-            <span>Start without a project (general time)</span>
-            <span className="text-xs text-slate-400">↵</span>
-          </button>
-        </li>
-        {filteredProjects.map((p) => (
-          <li key={p.id}>
-            <button
-              onClick={() => void doStart(p)}
-              disabled={!online || actionInFlight || !!state.timer}
-              className="flex w-full items-center justify-between border-b border-slate-800 px-4 py-2 text-left text-sm text-slate-200 hover:bg-slate-800 disabled:opacity-40"
-            >
-              <span className="truncate">{p.name}</span>
-              {state.mruProjectId === p.id && (
-                <span className="text-[10px] uppercase text-brand-400">MRU</span>
-              )}
-            </button>
-          </li>
-        ))}
-        {filteredProjects.length === 0 && (
-          <li className="px-4 py-3 text-xs text-slate-500">No matching projects.</li>
+        {running ? (
+          <>
+            <div>
+              <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-ink-300">
+                Project
+              </div>
+              <ProjectPicker
+                value={state.timer!.projectId}
+                onChange={(v) => void onRunningProjectChange(v)}
+                folders={state.folders}
+                projects={state.projects}
+                mruProjectId={state.mruProjectId}
+                disabled={!online || busy}
+              />
+            </div>
+            {state.timer!.description && (
+              <div className="rounded-md border border-ink-400 bg-ink-800 px-3 py-2 text-xs text-ink-200">
+                {state.timer!.description}
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            <input
+              type="text"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="What are you working on?"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !busy && online) void doStart();
+              }}
+              className="w-full rounded-md border border-ink-400 bg-ink-800 px-2.5 py-1.5 text-sm text-ink-100 placeholder:text-ink-300 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/40"
+            />
+            <div>
+              <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-ink-300">
+                Project
+              </div>
+              <ProjectPicker
+                value={draftProjectId}
+                onChange={setDraftProjectId}
+                folders={state.folders}
+                projects={state.projects}
+                mruProjectId={state.mruProjectId}
+                disabled={busy}
+              />
+            </div>
+          </>
         )}
-      </ul>
+      </section>
 
       {state.errorMessage && (
-        <div className="border-t border-red-900/50 bg-red-950/40 px-4 py-2 text-xs text-red-300">
+        <div className="border-t border-ink-400 bg-red-500/10 px-4 py-2 text-xs text-red-300">
           {state.errorMessage}
         </div>
       )}
@@ -316,5 +348,7 @@ export function Popup() {
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
-  return <div className="w-[340px] bg-slate-900 text-slate-100">{children}</div>;
+  return (
+    <div className="w-[340px] bg-ink-900 font-sans text-ink-100">{children}</div>
+  );
 }

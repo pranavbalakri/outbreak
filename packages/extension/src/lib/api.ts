@@ -1,4 +1,4 @@
-import type { ProjectDto, TimeEntryDto, UserDto } from '@outbreak/shared';
+import type { FolderDto, ProjectDto, TimeEntryDto, UserDto } from '@outbreak/shared';
 import { API_ORIGIN } from './config.js';
 import { readStorage, writeStorage } from './storage.js';
 
@@ -47,6 +47,17 @@ export const fetchMe = () => call<{ user: UserDto }>('/auth/me');
 
 export const fetchAssignedProjects = () =>
   call<{ projects: ProjectDto[] }>('/projects');
+
+export const fetchFolders = () => call<{ folders: FolderDto[] }>('/folders');
+
+export const updateTimeEntry = (
+  id: string,
+  patch: { projectId?: string | null; description?: string | null },
+) =>
+  call<{ entry: TimeEntryDto }>(`/time-entries/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  });
 
 export const fetchCurrentTimer = () =>
   call<{ entry: TimeEntryDto | null }>('/timer/current');
