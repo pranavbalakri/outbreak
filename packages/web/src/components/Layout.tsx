@@ -26,7 +26,6 @@ function LogoMark() {
       <div className="leading-none">
         <div className="font-sans text-xl font-bold tracking-tight">
           outbreak<span className="text-brand-500">.</span>
-          <span className="text-brand-400">track</span>
         </div>
         <div className="tk-sm mt-1">Internal tracker · v0.1</div>
       </div>
