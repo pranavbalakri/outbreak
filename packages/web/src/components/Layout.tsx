@@ -1,7 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext.js';
 import { TopTimer } from './TopTimer.js';
-import { NotificationBell } from './NotificationBell.js';
 import { FeedbackLauncher } from './FeedbackLauncher.js';
 
 const NAV = [
@@ -39,7 +38,6 @@ export function Layout() {
           <LogoMark />
           <div className="flex items-center gap-5">
             <TopTimer />
-            <NotificationBell />
             <FeedbackLauncher />
             {user && (
               <div className="flex items-center gap-3 border-l border-ink-400 pl-5">
