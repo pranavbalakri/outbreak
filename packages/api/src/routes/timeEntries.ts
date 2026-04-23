@@ -75,6 +75,7 @@ export async function registerTimeEntryRoutes(app: FastifyInstance): Promise<voi
       where,
       orderBy: { startedAt: 'desc' },
       take: 500,
+      include: { user: { select: { id: true, name: true } } },
     });
     return { entries: entries.map(toTimeEntryDto) };
   });

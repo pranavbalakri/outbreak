@@ -192,6 +192,11 @@ export const TimeEntryDtoSchema = z.object({
   rateCentsAtEntry: z.number().int().nonnegative(),
   source: TimeEntrySourceSchema,
   createdAt: DateTimeSchema,
+  /**
+   * Lightweight {id, name} for the entry's author. Included on list endpoints
+   * so admins can see who logged each entry without a separate /users lookup.
+   */
+  user: z.object({ id: IdSchema, name: z.string() }).optional(),
 });
 export type TimeEntryDto = z.infer<typeof TimeEntryDtoSchema>;
 

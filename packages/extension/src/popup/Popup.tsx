@@ -44,16 +44,6 @@ function fmtElapsed(startedAt: string): string {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
-async function activeTabNote(): Promise<string | undefined> {
-  try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tab?.url) return undefined;
-    return tab.title ? `${tab.title} — ${tab.url}` : tab.url;
-  } catch {
-    return undefined;
-  }
-}
-
 export function Popup() {
   const [state, setState] = useState<PopupState>(INITIAL);
   const [online, setOnline] = useState(navigator.onLine);
@@ -151,10 +141,10 @@ export function Popup() {
     setBusy(true);
     try {
       const projectName = state.projects.find((p) => p.id === draftProjectId)?.name ?? null;
-      const pageNote = description.trim() || (await activeTabNote());
+      const note = description.trim();
       const { entry } = await startTimer({
         projectId: draftProjectId,
-        ...(pageNote ? { description: pageNote } : {}),
+        ...(note ? { description: note } : {}),
       });
       await writeStorage({
         mruProjectId: draftProjectId,

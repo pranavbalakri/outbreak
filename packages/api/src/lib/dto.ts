@@ -87,8 +87,10 @@ export function toTaskDto(
   };
 }
 
-export function toTimeEntryDto(te: TimeEntry): TimeEntryDto {
-  return {
+export function toTimeEntryDto(
+  te: TimeEntry & { user?: { id: string; name: string } },
+): TimeEntryDto {
+  const dto: TimeEntryDto = {
     id: te.id,
     userId: te.userId,
     projectId: te.projectId,
@@ -102,4 +104,6 @@ export function toTimeEntryDto(te: TimeEntry): TimeEntryDto {
     source: te.source,
     createdAt: te.createdAt.toISOString(),
   };
+  if (te.user) dto.user = { id: te.user.id, name: te.user.name };
+  return dto;
 }

@@ -15,10 +15,13 @@ import { Badge, Button, Card, Field, Select, inputClass } from '../components/ui
 import { useConfirm } from '../components/Confirm.js';
 import { formatMinutes, formatTime, durationMinutes } from '../lib/format.js';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../auth/AuthContext.js';
 
 export function DashboardPage() {
   const { active, elapsedSeconds, start, stop } = useTimer();
   const queryClient = useQueryClient();
+  const { user: viewer } = useAuth();
+  const isAdmin = viewer?.role === 'ADMIN';
 
   const { data: projectData } = useQuery({
     queryKey: ['projects'],
@@ -140,6 +143,7 @@ export function DashboardPage() {
                 projectName={entry.projectId ? projectNameById.get(entry.projectId) : undefined}
                 assignedProjects={assigned}
                 folders={folders}
+                showUser={isAdmin}
                 onChange={() => {
                   queryClient.invalidateQueries({ queryKey: ['time-entries'] });
                 }}
@@ -192,12 +196,14 @@ function EntryRow({
   projectName,
   assignedProjects,
   folders,
+  showUser,
   onChange,
 }: {
   entry: TimeEntryDto;
   projectName: string | undefined;
   assignedProjects: import('@outbreak/shared').ProjectDto[];
   folders: import('@outbreak/shared').FolderDto[];
+  showUser: boolean;
   onChange: () => void;
 }) {
   const [editingNote, setEditingNote] = useState(false);
@@ -245,6 +251,12 @@ function EntryRow({
             {!entry.endedAt && <Badge tone="green">Running</Badge>}
           </div>
           <div className="mt-0.5 text-xs text-ink-200">
+            {showUser && entry.user && (
+              <>
+                <span className="font-medium text-ink-100">{entry.user.name}</span>
+                {' · '}
+              </>
+            )}
             {formatTime(entry.startedAt)} – {entry.endedAt ? formatTime(entry.endedAt) : 'now'} ·{' '}
             {formatMinutes(minutes)}
           </div>
