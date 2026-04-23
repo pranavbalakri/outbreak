@@ -48,7 +48,7 @@ async function ensureVisible(projectId: string, viewerId: string, isAdmin: boole
   const project = await prisma.project.findFirst({
     where: { id: projectId, deletedAt: null },
     include: {
-      assignments: { select: { userId: true } },
+      assignments: { select: { userId: true, user: { select: { id: true, name: true } } } },
       projectTags: { select: { tagId: true } },
     },
   });
@@ -85,7 +85,7 @@ export async function registerProjectRoutes(app: FastifyInstance): Promise<void>
     const projects = await prisma.project.findMany({
       where,
       include: {
-        assignments: { select: { userId: true } },
+        assignments: { select: { userId: true, user: { select: { id: true, name: true } } } },
         projectTags: { select: { tagId: true } },
       },
       orderBy: [{ dueAt: { sort: 'asc', nulls: 'last' } }, { name: 'asc' }],
@@ -121,7 +121,7 @@ export async function registerProjectRoutes(app: FastifyInstance): Promise<void>
     const projects = await prisma.project.findMany({
       where,
       include: {
-        assignments: { select: { userId: true } },
+        assignments: { select: { userId: true, user: { select: { id: true, name: true } } } },
         projectTags: { select: { tagId: true } },
       },
       orderBy: { dueAt: 'asc' },
@@ -193,7 +193,7 @@ export async function registerProjectRoutes(app: FastifyInstance): Promise<void>
         projectTags: { create: input.tagIds.map((tagId) => ({ tagId })) },
       },
       include: {
-        assignments: { select: { userId: true } },
+        assignments: { select: { userId: true, user: { select: { id: true, name: true } } } },
         projectTags: { select: { tagId: true } },
       },
     });
@@ -238,7 +238,7 @@ export async function registerProjectRoutes(app: FastifyInstance): Promise<void>
         ...(input.status !== undefined && { status: input.status }),
       },
       include: {
-        assignments: { select: { userId: true } },
+        assignments: { select: { userId: true, user: { select: { id: true, name: true } } } },
         projectTags: { select: { tagId: true } },
       },
     });

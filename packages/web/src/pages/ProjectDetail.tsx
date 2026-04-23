@@ -363,13 +363,18 @@ function AssigneesPanel({
   return (
     <div className="flex flex-wrap gap-1">
       {project.assigneeIds.map((uid) => {
-        const u = users.find((x) => x.id === uid);
+        // Prefer the server-provided {id,name} list (works for instructors
+        // who can't hit /users). Fall back to the admin /users query.
+        const name =
+          project.assignees.find((a) => a.id === uid)?.name
+            ?? users.find((x) => x.id === uid)?.name
+            ?? uid;
         return (
           <span
             key={uid}
             className="inline-flex items-center gap-1 rounded-full bg-ink-700 px-2 py-0.5 text-xs"
           >
-            {u?.name ?? uid}
+            {name}
             {canEdit && (
               <button
                 type="button"

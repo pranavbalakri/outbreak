@@ -39,7 +39,10 @@ export function toTagDto(t: Tag): TagDto {
 }
 
 export function toProjectDto(
-  p: Project & { assignments?: { userId: string }[]; projectTags?: { tagId: string }[] },
+  p: Project & {
+    assignments?: { userId: string; user?: { id: string; name: string } }[];
+    projectTags?: { tagId: string }[];
+  },
   extras?: { actualMinutes?: number },
 ): ProjectDto {
   const dto: ProjectDto = {
@@ -54,6 +57,10 @@ export function toProjectDto(
     createdByUserId: p.createdByUserId,
     createdAt: p.createdAt.toISOString(),
     assigneeIds: p.assignments?.map((a) => a.userId) ?? [],
+    assignees:
+      p.assignments
+        ?.map((a) => a.user)
+        .filter((u): u is { id: string; name: string } => !!u) ?? [],
     tagIds: p.projectTags?.map((t) => t.tagId) ?? [],
   };
   if (extras?.actualMinutes !== undefined) {

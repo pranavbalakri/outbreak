@@ -92,6 +92,13 @@ export const ProjectDtoSchema = z.object({
   createdByUserId: IdSchema,
   createdAt: DateTimeSchema,
   assigneeIds: z.array(IdSchema),
+  /**
+   * Lightweight {id, name} pairs for assignees. Included so non-admins (who
+   * can't hit /users) can render names without a separate lookup.
+   */
+  assignees: z
+    .array(z.object({ id: IdSchema, name: z.string() }))
+    .default([]),
   tagIds: z.array(IdSchema),
   actualMinutes: z.number().int().nonnegative().optional(),
   varianceMinutes: z.number().int().optional(),

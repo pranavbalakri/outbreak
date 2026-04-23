@@ -26,7 +26,11 @@ export function ensureSchema(): void {
 export async function resetDb(): Promise<void> {
   // Order: child → parent. TimeEntry trigger (week-lock) has to be disabled
   // for the truncate so we don't trip `week_locked` on bulk delete.
-  await prisma.$executeRawUnsafe('ALTER TABLE time_entries DISABLE TRIGGER ALL');
+  // Disable by name: hosted Postgres (Neon, RDS) rejects `DISABLE TRIGGER ALL`
+  // for non-superuser roles because it touches system FK triggers.
+  await prisma.$executeRawUnsafe(
+    'ALTER TABLE time_entries DISABLE TRIGGER "time_entries_week_lock_guard"',
+  );
   try {
     await prisma.$executeRawUnsafe(
       'TRUNCATE TABLE ' +
@@ -50,7 +54,9 @@ export async function resetDb(): Promise<void> {
         ' RESTART IDENTITY CASCADE',
     );
   } finally {
-    await prisma.$executeRawUnsafe('ALTER TABLE time_entries ENABLE TRIGGER ALL');
+    await prisma.$executeRawUnsafe(
+      'ALTER TABLE time_entries ENABLE TRIGGER "time_entries_week_lock_guard"',
+    );
   }
 }
 
