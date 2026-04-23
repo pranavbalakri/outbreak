@@ -11,7 +11,7 @@ import {
   YAxis,
 } from 'recharts';
 import type { ReportGroupBy } from '@outbreak/shared';
-import { Badge, Button, Card, Field, inputClass } from '../components/ui.js';
+import { Badge, Button, Card, Field, Select, inputClass } from '../components/ui.js';
 import {
   fetchFolders,
   fetchReportDaily,
@@ -221,59 +221,56 @@ export function ReportsPage() {
             </>
           )}
           <Field label="Folder">
-            <select
-              className={inputClass}
+            <Select
               value={folderId}
-              onChange={(e) => setFolderId(e.target.value)}
-            >
-              <option value="">All folders</option>
-              {foldersQ.data?.folders.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.name}
-                </option>
-              ))}
-            </select>
+              onChange={setFolderId}
+              placeholder="All folders"
+              options={[
+                { value: '', label: 'All folders' },
+                ...(foldersQ.data?.folders ?? []).map((f) => ({
+                  value: f.id,
+                  label: f.name,
+                })),
+              ]}
+            />
           </Field>
           <Field label="Tag">
-            <select
-              className={inputClass}
+            <Select
               value={tagId}
-              onChange={(e) => setTagId(e.target.value)}
-            >
-              <option value="">All tags</option>
-              {tagsQ.data?.tags.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
+              onChange={setTagId}
+              placeholder="All tags"
+              options={[
+                { value: '', label: 'All tags' },
+                ...(tagsQ.data?.tags ?? []).map((t) => ({
+                  value: t.id,
+                  label: t.name,
+                })),
+              ]}
+            />
           </Field>
           <Field label="Instructor">
-            <select
-              className={inputClass}
+            <Select
               value={instructorId}
-              onChange={(e) => setInstructorId(e.target.value)}
-            >
-              <option value="">All instructors</option>
-              {usersQ.data?.users
-                .filter((u) => u.role === 'INSTRUCTOR')
-                .map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.name}
-                  </option>
-                ))}
-            </select>
+              onChange={setInstructorId}
+              placeholder="All instructors"
+              options={[
+                { value: '', label: 'All instructors' },
+                ...(usersQ.data?.users ?? [])
+                  .filter((u) => u.role === 'INSTRUCTOR')
+                  .map((u) => ({ value: u.id, label: u.name })),
+              ]}
+            />
           </Field>
           <Field label="Billable">
-            <select
-              className={inputClass}
+            <Select
               value={billableFilter}
-              onChange={(e) => setBillableFilter(e.target.value as typeof billableFilter)}
-            >
-              <option value="all">All</option>
-              <option value="billable">Billable only</option>
-              <option value="nonbillable">Non-billable</option>
-            </select>
+              onChange={(v) => setBillableFilter(v as typeof billableFilter)}
+              options={[
+                { value: 'all', label: 'All' },
+                { value: 'billable', label: 'Billable only' },
+                { value: 'nonbillable', label: 'Non-billable' },
+              ]}
+            />
           </Field>
           <Field label="Unassigned">
             <label className="mt-2 inline-flex items-center gap-2 text-sm text-ink-100">

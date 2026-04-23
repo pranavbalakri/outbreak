@@ -4,17 +4,17 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Terminal/cyberpunk palette — pure black with blue accent.
+        // Linear/Vercel-style neutral slate, blue accent retained.
         ink: {
-          900: '#050607',
-          800: '#0a0b0d',
-          700: '#101216',
-          600: '#16181d',
-          500: '#1e2128',
-          400: '#2a2e38',
-          300: '#3a3f4b',
-          200: '#6b7180',
-          100: '#c7cbd4',
+          900: '#0a0a0b', // page background
+          800: '#101114', // panel background
+          700: '#16181c', // elevated panel / hover bg
+          600: '#1d2025', // input / disabled bg
+          500: '#26292f', // muted row
+          400: '#2a2d33', // subtle border
+          300: '#3a3e46', // stronger border / iconography
+          200: '#8b909a', // secondary text
+          100: '#e6e7ea', // primary text
         },
         brand: {
           50: '#eaf4ff',
@@ -30,23 +30,29 @@ export default {
         },
       },
       fontFamily: {
+        sans: [
+          'Inter',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'Segoe UI',
+          'Roboto',
+          'ui-sans-serif',
+          'system-ui',
+          'sans-serif',
+        ],
         mono: [
-          'JetBrains Mono',
           'ui-monospace',
           'SFMono-Regular',
           'Menlo',
           'Consolas',
           'monospace',
         ],
-        sans: [
-          'Inter',
-          'ui-sans-serif',
-          'system-ui',
-          '-apple-system',
-          'Segoe UI',
-          'Roboto',
-          'sans-serif',
-        ],
+      },
+      fontSize: {
+        // Slightly tighter defaults than Tailwind's — matches Linear.
+        xs: ['0.75rem', { lineHeight: '1rem' }],
+        sm: ['0.8125rem', { lineHeight: '1.25rem' }],
+        base: ['0.875rem', { lineHeight: '1.375rem' }],
       },
     },
   },

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { UserDto } from '@outbreak/shared';
-import { Badge, Button, Card, Field, Modal, inputClass } from '../components/ui.js';
+import { Badge, Button, Card, Field, Modal, Select, inputClass } from '../components/ui.js';
+import { useConfirm } from '../components/Confirm.js';
 import {
   createUser,
   deactivateUser,
@@ -20,6 +21,7 @@ function fmtCents(cents: number): string {
 
 export function TeamPage() {
   const qc = useQueryClient();
+  const confirm = useConfirm();
   const usersQ = useQuery({ queryKey: ['users'], queryFn: fetchUsers });
   const [editing, setEditing] = useState<UserDto | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -77,8 +79,20 @@ export function TeamPage() {
                     {u.isActive ? (
                       <Button
                         variant="danger"
-                        onClick={() => {
-                          if (confirm(`Deactivate ${u.name}?`)) deactivateM.mutate(u.id);
+                        onClick={async () => {
+                          const ok = await confirm({
+                            title: 'Deactivate user',
+                            message: (
+                              <>
+                                Deactivate <span className="text-ink-100">{u.name}</span>?
+                                They&apos;ll immediately lose access; their time entries and
+                                history stay intact.
+                              </>
+                            ),
+                            confirmLabel: 'Deactivate',
+                            danger: true,
+                          });
+                          if (ok) deactivateM.mutate(u.id);
                         }}
                       >
                         Deactivate
@@ -154,14 +168,14 @@ function EditUserModal({ user, onClose }: { user: UserDto; onClose: () => void }
           />
         </Field>
         <Field label="Role">
-          <select
-            className={inputClass}
+          <Select
             value={role}
-            onChange={(e) => setRole(e.target.value as 'ADMIN' | 'INSTRUCTOR')}
-          >
-            <option value="INSTRUCTOR">Instructor</option>
-            <option value="ADMIN">Admin</option>
-          </select>
+            onChange={(v) => setRole(v as 'ADMIN' | 'INSTRUCTOR')}
+            options={[
+              { value: 'INSTRUCTOR', label: 'Instructor' },
+              { value: 'ADMIN', label: 'Admin' },
+            ]}
+          />
         </Field>
         <label className="flex items-center gap-2 text-sm text-ink-100">
           <input
@@ -278,14 +292,14 @@ function InviteUserModal({ onClose }: { onClose: () => void }) {
           />
         </Field>
         <Field label="Role">
-          <select
-            className={inputClass}
+          <Select
             value={role}
-            onChange={(e) => setRole(e.target.value as 'ADMIN' | 'INSTRUCTOR')}
-          >
-            <option value="INSTRUCTOR">Instructor</option>
-            <option value="ADMIN">Admin</option>
-          </select>
+            onChange={(v) => setRole(v as 'ADMIN' | 'INSTRUCTOR')}
+            options={[
+              { value: 'INSTRUCTOR', label: 'Instructor' },
+              { value: 'ADMIN', label: 'Admin' },
+            ]}
+          />
         </Field>
         <Field label="Starting rate ($/hr)">
           <input

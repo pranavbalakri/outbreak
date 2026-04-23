@@ -2,13 +2,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { formatElapsed, useTimer } from '../hooks/useTimer.js';
 import { fetchProjects, updateTimeEntry } from '../api/queries.js';
+import { Select } from './ui.js';
 
 /**
- * Big Toggl-style timer in the top bar. Shows (when idle) a description input,
- * project picker, elapsed-time readout, and a round Start button. When a timer
- * is running the readout counts up live, the button flips to Stop, and the
- * description / project fields remain editable — edits PATCH the running entry
- * in place.
+ * Toggl-style top-bar timer. While idle, offers a description input, project
+ * picker, elapsed time, and a round Start button. While running the readout
+ * ticks live, the button flips to Stop, and description / project edits PATCH
+ * the running entry in place.
  */
 export function TopTimer() {
   const { active, elapsedSeconds, start, stop, refresh } = useTimer();
@@ -25,14 +25,10 @@ export function TopTimer() {
     return m;
   }, [projects]);
 
-  // Draft state used when idle. When a timer is running we edit the entry
-  // in place so the draft values track `active` instead of local state.
   const [draftDescription, setDraftDescription] = useState('');
   const [draftProjectId, setDraftProjectId] = useState<string>('');
-
-  // Mirror the active entry's fields into the inputs so they stay in sync
-  // across WebSocket updates / cross-tab edits. When the timer stops, reset.
   const [runningDescription, setRunningDescription] = useState('');
+
   useEffect(() => {
     setRunningDescription(active?.description ?? '');
   }, [active?.id, active?.description]);
@@ -40,10 +36,7 @@ export function TopTimer() {
   const running = !!active;
 
   const patchActive = useMutation({
-    mutationFn: (patch: {
-      projectId?: string | null;
-      description?: string | null;
-    }) => {
+    mutationFn: (patch: { projectId?: string | null; description?: string | null }) => {
       if (!active) throw new Error('No active timer');
       return updateTimeEntry(active.id, patch);
     },
@@ -54,11 +47,8 @@ export function TopTimer() {
   });
 
   const onProjectChange = (next: string) => {
-    if (running) {
-      patchActive.mutate({ projectId: next || null });
-    } else {
-      setDraftProjectId(next);
-    }
+    if (running) patchActive.mutate({ projectId: next || null });
+    else setDraftProjectId(next);
   };
 
   const commitDescription = () => {
@@ -81,9 +71,6 @@ export function TopTimer() {
     });
   };
 
-  // Ensure the currently-selected project is in the option list even if the
-  // user doesn't have it in their /projects response (e.g. admin attached it
-  // from a project they normally wouldn't see).
   const extraOption =
     running && active?.projectId && !projectMap.has(active.projectId)
       ? [{ id: active.projectId, name: 'Project' }]
@@ -95,40 +82,33 @@ export function TopTimer() {
         type="text"
         value={running ? runningDescription : draftDescription}
         onChange={(e) =>
-          running
-            ? setRunningDescription(e.target.value)
-            : setDraftDescription(e.target.value)
+          running ? setRunningDescription(e.target.value) : setDraftDescription(e.target.value)
         }
         placeholder="What are you working on?"
         onBlur={commitDescription}
         onKeyDown={(e) => {
           if (e.key === 'Enter') {
-            if (running) {
-              (e.target as HTMLInputElement).blur();
-            } else {
-              void toggle();
-            }
+            if (running) (e.target as HTMLInputElement).blur();
+            else void toggle();
           }
         }}
-        className="w-64 rounded-sm border border-ink-400 bg-ink-900/60 px-3 py-2 text-sm text-ink-100 placeholder:text-ink-300 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/40"
+        className="w-60 rounded-md border border-ink-400 bg-ink-800 px-3 py-1.5 text-sm text-ink-100 placeholder:text-ink-300 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/40"
       />
 
-      <select
+      <Select
+        ariaLabel="Project"
+        triggerWidth={180}
         value={running ? (active!.projectId ?? '') : draftProjectId}
-        onChange={(e) => onProjectChange(e.target.value)}
-        aria-label="Project"
-        className="max-w-[180px] rounded-sm border border-ink-400 bg-ink-900/60 px-2 py-2 text-sm text-ink-100 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/40"
-      >
-        <option value="">— No project —</option>
-        {extraOption.concat(projects).map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.name}
-          </option>
-        ))}
-      </select>
+        onChange={onProjectChange}
+        placeholder="No project"
+        options={[
+          { value: '', label: 'No project' },
+          ...extraOption.concat(projects).map((p) => ({ value: p.id, label: p.name })),
+        ]}
+      />
 
       <div
-        className={`font-mono tabular-nums text-xl ${
+        className={`ml-1 min-w-[72px] text-right font-mono tabular-nums text-[15px] ${
           running ? 'text-brand-200' : 'text-ink-200'
         }`}
         aria-live="polite"
@@ -140,18 +120,18 @@ export function TopTimer() {
         type="button"
         onClick={() => void toggle()}
         aria-label={running ? 'Stop timer' : 'Start timer'}
-        className={`flex h-12 w-12 items-center justify-center rounded-full transition focus:outline-none focus:ring-2 focus:ring-brand-400/60 ${
+        className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-ink-900 ${
           running
-            ? 'bg-red-500 hover:bg-red-400 shadow-[0_0_0_1px_rgba(239,68,68,0.5),0_0_28px_-6px_rgba(239,68,68,0.8)]'
-            : 'bg-brand-500 hover:bg-brand-400 shadow-[0_0_0_1px_rgba(26,115,255,0.5),0_0_28px_-6px_rgba(26,115,255,0.8)]'
+            ? 'bg-red-500 hover:bg-red-400 focus:ring-red-400/60'
+            : 'bg-brand-500 hover:bg-brand-400 focus:ring-brand-400/60'
         }`}
       >
         {running ? (
-          <span className="block h-4 w-4 rounded-[2px] bg-white" />
+          <span className="block h-3 w-3 rounded-[2px] bg-white" />
         ) : (
           <span
-            className="block h-0 w-0 border-y-[9px] border-l-[14px] border-y-transparent border-l-white"
-            style={{ marginLeft: 3 }}
+            className="block h-0 w-0 border-y-[6px] border-l-[10px] border-y-transparent border-l-white"
+            style={{ marginLeft: 2 }}
           />
         )}
       </button>

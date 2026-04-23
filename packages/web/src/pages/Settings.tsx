@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Badge, Button, Card, Field, Modal, inputClass } from '../components/ui.js';
 import { useAuth } from '../auth/AuthContext.js';
 import { apiOrigin } from '../api/client.js';
+import { useConfirm } from '../components/Confirm.js';
 import {
   createFolder,
   createTag,
@@ -216,18 +217,32 @@ function UsageTab() {
 
 function FoldersTab() {
   const qc = useQueryClient();
+  const confirm = useConfirm();
   const foldersQ = useQuery({ queryKey: ['folders'], queryFn: fetchFolders });
-  const [open, setOpen] = useState(false);
-  const [name, setName] = useState('');
-  const [color, setColor] = useState('#4f46e5');
+  // null = closed; { id: null } = creating; { id: '…' } = editing that folder
+  const [sheet, setSheet] = useState<
+    | null
+    | { id: string | null; name: string; color: string }
+  >(null);
   const [error, setError] = useState<string | null>(null);
 
   const createM = useMutation({
-    mutationFn: () => createFolder({ name, color }),
+    mutationFn: () =>
+      createFolder({ name: sheet!.name, color: sheet!.color }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['folders'] });
-      setOpen(false);
-      setName('');
+      setSheet(null);
+      setError(null);
+    },
+    onError: (e: Error) => setError(e.message),
+  });
+
+  const editM = useMutation({
+    mutationFn: () =>
+      updateFolder(sheet!.id!, { name: sheet!.name, color: sheet!.color }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['folders'] });
+      setSheet(null);
       setError(null);
     },
     onError: (e: Error) => setError(e.message),
@@ -244,11 +259,16 @@ function FoldersTab() {
     onError: (e: Error) => alert(e.message),
   });
 
+  const isEditing = sheet?.id !== null && sheet?.id !== undefined;
+  const pending = createM.isPending || editM.isPending;
+
   return (
     <Card className="p-4">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-ink-100">Folders</h2>
-        <Button onClick={() => setOpen(true)}>New folder</Button>
+        <Button onClick={() => setSheet({ id: null, name: '', color: '#1a73ff' })}>
+          New folder
+        </Button>
       </div>
       <table className="w-full text-sm">
         <thead>
@@ -280,12 +300,41 @@ function FoldersTab() {
                   <Button
                     variant="secondary"
                     onClick={() =>
+                      setSheet({
+                        id: f.id,
+                        name: f.name,
+                        color: f.color ?? '#1a73ff',
+                      })
+                    }
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() =>
                       archiveM.mutate({ id: f.id, archived: !f.archivedAt })
                     }
                   >
                     {f.archivedAt ? 'Unarchive' : 'Archive'}
                   </Button>
-                  <Button variant="danger" onClick={() => deleteM.mutate(f.id)}>
+                  <Button
+                    variant="danger"
+                    onClick={async () => {
+                      const ok = await confirm({
+                        title: 'Delete folder',
+                        message: (
+                          <>
+                            Delete <span className="text-ink-100">“{f.name}”</span>? Folders
+                            that still contain projects can&apos;t be deleted — remove or
+                            reassign them first.
+                          </>
+                        ),
+                        confirmLabel: 'Delete',
+                        danger: true,
+                      });
+                      if (ok) deleteM.mutate(f.id);
+                    }}
+                  >
                     Delete
                   </Button>
                 </div>
@@ -295,33 +344,60 @@ function FoldersTab() {
         </tbody>
       </table>
 
-      <Modal open={open} onClose={() => setOpen(false)} title="New folder">
+      <Modal
+        open={sheet !== null}
+        onClose={() => {
+          setSheet(null);
+          setError(null);
+        }}
+        title={isEditing ? 'Edit folder' : 'New folder'}
+      >
         <div className="space-y-3">
           <Field label="Name">
             <input
               className={inputClass}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={sheet?.name ?? ''}
+              onChange={(e) =>
+                setSheet((s) => (s ? { ...s, name: e.target.value } : s))
+              }
+              autoFocus
             />
           </Field>
           <Field label="Color">
-            <input
-              type="color"
-              className="h-9 w-16"
-              value={color}
-              onChange={(e) => setColor(e.target.value)}
-            />
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                className="h-9 w-12 cursor-pointer rounded border border-ink-400 bg-ink-900"
+                value={sheet?.color ?? '#1a73ff'}
+                onChange={(e) =>
+                  setSheet((s) => (s ? { ...s, color: e.target.value } : s))
+                }
+              />
+              <code className="text-xs text-ink-200">{sheet?.color}</code>
+            </div>
           </Field>
-          {error && <div className="text-sm text-red-600">{error}</div>}
+          {error && <div className="text-sm text-red-400">{error}</div>}
           <div className="flex justify-end gap-2">
-            <Button variant="secondary" onClick={() => setOpen(false)}>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setSheet(null);
+                setError(null);
+              }}
+            >
               Cancel
             </Button>
             <Button
-              disabled={!name || createM.isPending}
-              onClick={() => createM.mutate()}
+              disabled={!sheet?.name?.trim() || pending}
+              onClick={() => (isEditing ? editM.mutate() : createM.mutate())}
             >
-              {createM.isPending ? 'Creating…' : 'Create'}
+              {pending
+                ? isEditing
+                  ? 'Saving…'
+                  : 'Creating…'
+                : isEditing
+                  ? 'Save'
+                  : 'Create'}
             </Button>
           </div>
         </div>
@@ -385,6 +461,7 @@ function TagsTab() {
 
 function WeeksTab() {
   const qc = useQueryClient();
+  const confirm = useConfirm();
   const weeksQ = useQuery({ queryKey: ['weeks'], queryFn: fetchWeeks });
   const lockM = useMutation({
     mutationFn: ({ y, w }: { y: number; w: number }) => lockWeek(y, w),
@@ -444,14 +521,20 @@ function WeeksTab() {
                   </Button>
                 ) : (
                   <Button
-                    onClick={() => {
-                      if (
-                        confirm(
-                          `Lock ${w.isoYear}-W${String(w.isoWeek).padStart(2, '0')}? Users in this week will be notified.`,
-                        )
-                      ) {
-                        lockM.mutate({ y: w.isoYear, w: w.isoWeek });
-                      }
+                    onClick={async () => {
+                      const label = `${w.isoYear}-W${String(w.isoWeek).padStart(2, '0')}`;
+                      const ok = await confirm({
+                        title: 'Lock week',
+                        message: (
+                          <>
+                            Lock <span className="text-ink-100">{label}</span>? All time
+                            entries in this week become read-only until you unlock it.
+                          </>
+                        ),
+                        confirmLabel: 'Lock',
+                        danger: true,
+                      });
+                      if (ok) lockM.mutate({ y: w.isoYear, w: w.isoWeek });
                     }}
                   >
                     Lock

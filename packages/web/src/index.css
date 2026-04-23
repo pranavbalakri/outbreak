@@ -1,59 +1,33 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 html, body, #root { height: 100%; }
-
-/* Native form controls render dark (select dropdown options, date pickers,
-   color picker, etc) */
 html { color-scheme: dark; }
-select { @apply bg-ink-900 text-ink-100; }
-option { @apply bg-ink-800 text-ink-100; }
 
 body {
   @apply bg-ink-900 text-ink-100 antialiased font-sans;
-  background-image:
-    radial-gradient(rgba(26, 115, 255, 0.06) 1px, transparent 1px);
-  background-size: 24px 24px;
-  background-position: 0 0;
+  font-feature-settings: 'cv11', 'ss01', 'ss03';
 }
 
-/* Terminal-flavored labels used in small-caps headers. */
-.tk {
-  @apply font-mono uppercase tracking-[0.18em] text-ink-200;
-}
+select { @apply bg-ink-800 text-ink-100; }
+option { @apply bg-ink-800 text-ink-100; }
 
-.tk-sm {
-  @apply font-mono uppercase tracking-[0.18em] text-[11px] text-ink-200;
-}
+/* Links default to blue accent with subtle hover. */
+a { @apply text-brand-300 hover:text-brand-200; }
 
-/* Thin blue underline ticker used on dividers. */
-.hr-brand {
-  @apply h-px w-full bg-gradient-to-r from-brand-500/60 via-brand-500/20 to-transparent;
-}
-
-/* Dashed outline — matches the reference's dotted squares. */
-.dash {
-  @apply border border-dashed border-brand-500/40;
-}
-
-/* Blinking caret (for status strip). */
-@keyframes blink {
-  0%, 50% { opacity: 1; }
-  50.01%, 100% { opacity: 0.15; }
-}
-.blink { animation: blink 1.4s steps(1, end) infinite; }
-
-/* Scrollbars that don't look like Windows 95 on dark mode. */
+/* Thin dark scrollbars. */
 *::-webkit-scrollbar { width: 10px; height: 10px; }
 *::-webkit-scrollbar-track { background: transparent; }
 *::-webkit-scrollbar-thumb {
-  background: rgba(99, 168, 255, 0.12);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 10px;
 }
-*::-webkit-scrollbar-thumb:hover { background: rgba(99, 168, 255, 0.28); }
+*::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.16); }
 
-/* Links default to brand. */
-a { @apply text-brand-300 hover:text-brand-200; }
+/* Subtle ring used on focus across inputs. */
+.focus-ring {
+  @apply focus:outline-none focus:ring-1 focus:ring-brand-500/50 focus:border-brand-500;
+}

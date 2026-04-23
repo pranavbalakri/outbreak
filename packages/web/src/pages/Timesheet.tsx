@@ -8,7 +8,7 @@ import {
   fetchTimeEntries,
   updateTimeEntry,
 } from '../api/queries.js';
-import { Badge, Button, Card, Field, Modal, inputClass } from '../components/ui.js';
+import { Badge, Button, Card, Field, Modal, Select, inputClass } from '../components/ui.js';
 import { addDays, formatMinutes, startOfIsoWeek, durationMinutes } from '../lib/format.js';
 import { ApiError } from '../api/client.js';
 
@@ -339,18 +339,15 @@ function AddTimeModal({
     <Modal open onClose={onClose} title="Add time">
       <div className="space-y-3">
         <Field label="Project">
-          <select
-            className={inputClass}
+          <Select
             value={projectId}
-            onChange={(e) => setProjectId(e.target.value)}
-          >
-            <option value="">— No project (general time) —</option>
-            {projects.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
+            onChange={setProjectId}
+            placeholder="No project (general time)"
+            options={[
+              { value: '', label: 'No project (general time)' },
+              ...projects.map((p) => ({ value: p.id, label: p.name })),
+            ]}
+          />
         </Field>
         <div className="grid grid-cols-3 gap-3">
           <Field label="Date">
@@ -439,18 +436,15 @@ function AttachModal({
     >
       <div className="space-y-3">
         <Field label="Project">
-          <select
-            className={inputClass}
+          <Select
             value={projectId}
-            onChange={(e) => setProjectId(e.target.value)}
-          >
-            <option value="">— No project (general time) —</option>
-            {projects.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
+            onChange={setProjectId}
+            placeholder="No project (general time)"
+            options={[
+              { value: '', label: 'No project (general time)' },
+              ...projects.map((p) => ({ value: p.id, label: p.name })),
+            ]}
+          />
         </Field>
         <div className="flex justify-end gap-2">
           <Button variant="secondary" onClick={onClose}>

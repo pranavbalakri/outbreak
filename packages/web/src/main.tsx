@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { App } from './App.js';
 import { AuthProvider } from './auth/AuthContext.js';
 import { TimerProvider } from './hooks/useTimer.js';
+import { ConfirmProvider } from './components/Confirm.js';
 import './index.css';
 
 const queryClient = new QueryClient({
@@ -19,7 +20,9 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
       <BrowserRouter>
         <AuthProvider>
           <TimerProvider>
-            <App />
+            <ConfirmProvider>
+              <App />
+            </ConfirmProvider>
           </TimerProvider>
         </AuthProvider>
       </BrowserRouter>

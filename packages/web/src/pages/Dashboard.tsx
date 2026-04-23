@@ -9,7 +9,8 @@ import {
 } from '../api/queries.js';
 import type { TimeEntryDto } from '@outbreak/shared';
 import { formatElapsed, useTimer } from '../hooks/useTimer.js';
-import { Badge, Button, Card, Field, inputClass } from '../components/ui.js';
+import { Badge, Button, Card, Field, Select, inputClass } from '../components/ui.js';
+import { useConfirm } from '../components/Confirm.js';
 import { formatMinutes, formatTime, durationMinutes } from '../lib/format.js';
 import { Link } from 'react-router-dom';
 
@@ -91,18 +92,15 @@ export function DashboardPage() {
           ) : (
             <div className="space-y-3">
               <Field label="Project">
-                <select
-                  className={inputClass}
+                <Select
                   value={selectedProject}
-                  onChange={(e) => setSelectedProject(e.target.value)}
-                >
-                  <option value="">— No project (general time) —</option>
-                  {assigned.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setSelectedProject}
+                  placeholder="No project (general time)"
+                  options={[
+                    { value: '', label: 'No project (general time)' },
+                    ...assigned.map((p) => ({ value: p.id, label: p.name })),
+                  ]}
+                />
               </Field>
               <Field label="Note (optional)">
                 <input
@@ -208,8 +206,15 @@ function EntryRow({
     onChange();
   };
 
+  const confirm = useConfirm();
   const onDelete = async () => {
-    if (!window.confirm('Delete this entry?')) return;
+    const ok = await confirm({
+      title: 'Delete time entry',
+      message: 'This entry will be removed from all reports and your timesheet.',
+      confirmLabel: 'Delete',
+      danger: true,
+    });
+    if (!ok) return;
     await deleteTimeEntry(entry.id);
     onChange();
   };
@@ -260,20 +265,16 @@ function EntryRow({
           )}
           {attaching && (
             <div className="mt-2 flex items-center gap-2">
-              <select
-                className={inputClass + ' !w-auto'}
-                defaultValue=""
-                onChange={(e) => void attach(e.target.value)}
-              >
-                <option value="" disabled>
-                  Choose a project…
-                </option>
-                {assignedProjects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
+              <Select
+                value=""
+                onChange={(v) => void attach(v)}
+                placeholder="Choose a project…"
+                triggerWidth={240}
+                options={assignedProjects.map((p) => ({
+                  value: p.id,
+                  label: p.name,
+                }))}
+              />
               <Button variant="secondary" onClick={() => setAttaching(false)}>
                 Cancel
               </Button>

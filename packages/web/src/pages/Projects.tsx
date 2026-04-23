@@ -11,7 +11,7 @@ import {
   fetchUsers,
 } from '../api/queries.js';
 import { useAuth } from '../auth/AuthContext.js';
-import { Badge, Button, Card, Field, Modal, inputClass } from '../components/ui.js';
+import { Badge, Button, Card, Field, Modal, Select, inputClass } from '../components/ui.js';
 import { formatMinutes } from '../lib/format.js';
 
 export function ProjectsPage() {
@@ -74,36 +74,34 @@ export function ProjectsPage() {
 
       {/* Filters */}
       <Card className="mb-4 flex flex-wrap items-end gap-3 p-4">
-        <div className="min-w-[160px]">
+        <div className="min-w-[180px]">
           <Field label="Folder">
-            <select
-              className={inputClass}
+            <Select
               value={folderFilter}
-              onChange={(e) => setFolderFilter(e.target.value)}
-            >
-              <option value="">All folders</option>
-              {folders.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.name}
-                </option>
-              ))}
-            </select>
+              onChange={setFolderFilter}
+              placeholder="All folders"
+              options={[
+                { value: '', label: 'All folders' },
+                ...folders.map((f) => ({ value: f.id, label: f.name })),
+              ]}
+            />
           </Field>
         </div>
-        <div className="min-w-[160px]">
+        <div className="min-w-[180px]">
           <Field label="Status">
-            <select
-              className={inputClass}
+            <Select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="">Any status</option>
-              <option value="NOT_STARTED">Not started</option>
-              <option value="IN_PROGRESS">In progress</option>
-              <option value="BLOCKED">Blocked</option>
-              <option value="COMPLETE">Complete</option>
-              <option value="ARCHIVED">Archived</option>
-            </select>
+              onChange={setStatusFilter}
+              placeholder="Any status"
+              options={[
+                { value: '', label: 'Any status' },
+                { value: 'NOT_STARTED', label: 'Not started' },
+                { value: 'IN_PROGRESS', label: 'In progress' },
+                { value: 'BLOCKED', label: 'Blocked' },
+                { value: 'COMPLETE', label: 'Complete' },
+                { value: 'ARCHIVED', label: 'Archived' },
+              ]}
+            />
           </Field>
         </div>
         <div className="min-w-[200px] flex-1">
@@ -271,17 +269,11 @@ function CreateProjectModal({
         </Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Folder">
-            <select
-              className={inputClass}
+            <Select
               value={folderId}
-              onChange={(e) => setFolderId(e.target.value)}
-            >
-              {folders.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.name}
-                </option>
-              ))}
-            </select>
+              onChange={setFolderId}
+              options={folders.map((f) => ({ value: f.id, label: f.name }))}
+            />
           </Field>
           <Field label="Estimated hours">
             <input

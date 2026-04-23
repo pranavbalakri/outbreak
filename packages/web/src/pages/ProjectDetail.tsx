@@ -22,7 +22,8 @@ import {
 } from '../api/queries.js';
 import { useAuth } from '../auth/AuthContext.js';
 import { useTimer } from '../hooks/useTimer.js';
-import { Badge, Button, Card, Field, Modal, inputClass } from '../components/ui.js';
+import { Badge, Button, Card, Field, Modal, Select, inputClass } from '../components/ui.js';
+import { useConfirm } from '../components/Confirm.js';
 import { formatDate, formatMinutes, formatTime, durationMinutes } from '../lib/format.js';
 
 export function ProjectDetailPage() {
@@ -31,6 +32,7 @@ export function ProjectDetailPage() {
   const isAdmin = user?.role === 'ADMIN';
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const confirm = useConfirm();
   const { start, active } = useTimer();
 
   const deleteProjectM = useMutation({
@@ -118,14 +120,20 @@ export function ProjectDetailPage() {
               <Button
                 variant="danger"
                 disabled={deleteProjectM.isPending}
-                onClick={() => {
-                  if (
-                    confirm(
-                      `Delete "${project.name}"? This hides it from all views but preserves time entries already logged against it.`,
-                    )
-                  ) {
-                    deleteProjectM.mutate(project.id);
-                  }
+                onClick={async () => {
+                  const ok = await confirm({
+                    title: 'Delete project',
+                    message: (
+                      <>
+                        Delete <span className="text-ink-100">“{project.name}”</span>? It will
+                        disappear from all views, but time entries already logged against it
+                        are preserved.
+                      </>
+                    ),
+                    confirmLabel: 'Delete',
+                    danger: true,
+                  });
+                  if (ok) deleteProjectM.mutate(project.id);
                 }}
               >
                 {deleteProjectM.isPending ? 'Deleting…' : 'Delete'}
@@ -244,7 +252,13 @@ export function ProjectDetailPage() {
                       type="button"
                       className="text-xs text-ink-300 hover:text-red-600"
                       onClick={async () => {
-                        if (!window.confirm('Delete this task?')) return;
+                        const ok = await confirm({
+                          title: 'Delete task',
+                          message: `Delete “${t.name}”?`,
+                          confirmLabel: 'Delete',
+                          danger: true,
+                        });
+                        if (!ok) return;
                         await deleteTask(t.id);
                         invalidate();
                       }}
@@ -372,25 +386,17 @@ function AssigneesPanel({
         );
       })}
       {canEdit && available.length > 0 && (
-        <select
-          className="rounded-full bg-brand-50 px-2 py-0.5 text-xs text-brand-700"
-          defaultValue=""
-          onChange={async (e) => {
-            if (!e.target.value) return;
-            await addAssignee(project.id, e.target.value);
-            e.target.value = '';
+        <Select
+          value=""
+          onChange={async (v) => {
+            if (!v) return;
+            await addAssignee(project.id, v);
             onChange();
           }}
-        >
-          <option value="" disabled>
-            + Add
-          </option>
-          {available.map((u) => (
-            <option key={u.id} value={u.id}>
-              {u.name}
-            </option>
-          ))}
-        </select>
+          placeholder="+ Add"
+          triggerWidth={110}
+          options={available.map((u) => ({ value: u.id, label: u.name }))}
+        />
       )}
     </div>
   );
@@ -437,25 +443,17 @@ function TagsPanel({
         );
       })}
       {canEdit && available.length > 0 && (
-        <select
-          className="rounded-full bg-ink-700 px-2 py-0.5 text-xs"
-          defaultValue=""
-          onChange={async (e) => {
-            if (!e.target.value) return;
-            await addProjectTag(project.id, e.target.value);
-            e.target.value = '';
+        <Select
+          value=""
+          onChange={async (v) => {
+            if (!v) return;
+            await addProjectTag(project.id, v);
             onChange();
           }}
-        >
-          <option value="" disabled>
-            + Add tag
-          </option>
-          {available.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name}
-            </option>
-          ))}
-        </select>
+          placeholder="+ Add tag"
+          triggerWidth={130}
+          options={available.map((t) => ({ value: t.id, label: t.name }))}
+        />
       )}
       {canEdit && !creating && (
         <button
@@ -539,17 +537,13 @@ function EditProjectModal({
             />
           </Field>
           <Field label="Status">
-            <select
-              className={inputClass}
+            <Select
               value={status}
-              onChange={(e) => setStatus(e.target.value as typeof status)}
-            >
-              {['NOT_STARTED', 'IN_PROGRESS', 'BLOCKED', 'COMPLETE', 'ARCHIVED'].map((s) => (
-                <option key={s} value={s}>
-                  {s.replace('_', ' ').toLowerCase()}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => setStatus(v as typeof status)}
+              options={['NOT_STARTED', 'IN_PROGRESS', 'BLOCKED', 'COMPLETE', 'ARCHIVED'].map(
+                (s) => ({ value: s, label: s.replace('_', ' ').toLowerCase() }),
+              )}
+            />
           </Field>
         </div>
         <Field label="Due date">

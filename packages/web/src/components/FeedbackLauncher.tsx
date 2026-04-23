@@ -34,7 +34,7 @@ export function FeedbackLauncher() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="text-xs text-ink-200 hover:text-brand-300"
+        className="rounded-md px-2 py-1 text-xs text-ink-200 transition-colors hover:bg-ink-700 hover:text-ink-100"
       >
         Feedback
       </button>
