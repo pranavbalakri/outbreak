@@ -16,10 +16,14 @@ export async function api<T = unknown>(
   path: string,
   init: RequestInit = {},
 ): Promise<T> {
+  // Only set Content-Type when there's actually a body. Fastify 400s on an
+  // empty body with Content-Type: application/json (bodyless POSTs like
+  // /timer/stop and /auth/logout).
+  const hasBody = init.body !== undefined && init.body !== null;
   const res = await fetch(`${API_ORIGIN}${path}`, {
     credentials: 'include',
     headers: {
-      'Content-Type': 'application/json',
+      ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
       ...(init.headers ?? {}),
     },
     ...init,
