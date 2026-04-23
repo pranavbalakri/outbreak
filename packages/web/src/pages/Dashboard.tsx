@@ -236,56 +236,50 @@ function EntryRow({
   const minutes = durationMinutes(entry.startedAt, entry.endedAt);
 
   return (
-    <li className="py-2">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <ProjectPicker
-              value={entry.projectId}
-              onChange={(v) => void attach(v ?? '')}
-              folders={folders}
-              projects={assignedProjects}
-              variant="inline"
-              ariaLabel="Change project"
-            />
-            {!entry.endedAt && <Badge tone="green">Running</Badge>}
-          </div>
-          <div className="mt-0.5 text-xs text-ink-200">
-            {showUser && entry.user && (
-              <>
-                <span className="font-medium text-ink-100">{entry.user.name}</span>
-                {' · '}
-              </>
-            )}
-            {formatTime(entry.startedAt)} – {entry.endedAt ? formatTime(entry.endedAt) : 'now'} ·{' '}
-            {formatMinutes(minutes)}
-          </div>
+    <li className="py-1.5">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <ProjectPicker
+            value={entry.projectId}
+            onChange={(v) => void attach(v ?? '')}
+            folders={folders}
+            projects={assignedProjects}
+            variant="inline"
+            ariaLabel="Change project"
+          />
+          {!entry.endedAt && <Badge tone="green">Running</Badge>}
+          <span className="text-ink-300">·</span>
           {editingNote ? (
-            <div className="mt-1 flex gap-2">
-              <input
-                className={inputClass}
-                value={noteDraft}
-                onChange={(e) => setNoteDraft(e.target.value)}
-                autoFocus
-                onBlur={() => void saveNote()}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') void saveNote();
-                  if (e.key === 'Escape') setEditingNote(false);
-                }}
-              />
-            </div>
+            <input
+              className={`${inputClass} h-7 min-w-0 flex-1 py-0 text-sm`}
+              value={noteDraft}
+              onChange={(e) => setNoteDraft(e.target.value)}
+              autoFocus
+              onBlur={() => void saveNote()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') void saveNote();
+                if (e.key === 'Escape') setEditingNote(false);
+              }}
+            />
           ) : (
-            <div
-              className="mt-1 cursor-text text-sm text-ink-200"
+            <span
+              className="min-w-0 flex-1 cursor-text truncate text-sm text-ink-200"
               onClick={() => setEditingNote(true)}
             >
               {entry.description || (
                 <span className="italic text-ink-300">click to add a note</span>
               )}
-            </div>
+            </span>
           )}
         </div>
-        <div className="flex flex-shrink-0 items-center gap-2">
+        <div className="flex flex-shrink-0 items-center gap-3 text-xs text-ink-200">
+          {showUser && entry.user && (
+            <span className="font-medium text-ink-100">{entry.user.name}</span>
+          )}
+          <span className="tabular-nums">
+            {formatTime(entry.startedAt)} – {entry.endedAt ? formatTime(entry.endedAt) : 'now'} ·{' '}
+            {formatMinutes(minutes)}
+          </span>
           {entry.endedAt && (
             <button
               type="button"
