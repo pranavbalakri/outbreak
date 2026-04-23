@@ -148,7 +148,10 @@ export function ProjectPicker({
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 z-20 mt-1 flex max-h-72 flex-col rounded-md border border-ink-400 bg-ink-800 shadow-lg">
+        <div
+          style={{ backgroundColor: '#101114' }}
+          className="absolute left-0 right-0 z-50 mt-1 flex max-h-72 flex-col rounded-md border border-ink-400 shadow-lg"
+        >
           <div className="border-b border-ink-400 p-1.5">
             <input
               ref={inputRef}

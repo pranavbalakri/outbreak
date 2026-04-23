@@ -290,6 +290,11 @@ export function Popup() {
 
         {running ? (
           <>
+            {state.timer!.description && (
+              <div className="max-h-20 overflow-y-auto rounded-md border border-ink-400 bg-ink-800 px-3 py-2 text-xs text-ink-200">
+                {state.timer!.description}
+              </div>
+            )}
             <div>
               <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-ink-300">
                 Project
@@ -303,11 +308,6 @@ export function Popup() {
                 disabled={!online || busy}
               />
             </div>
-            {state.timer!.description && (
-              <div className="rounded-md border border-ink-400 bg-ink-800 px-3 py-2 text-xs text-ink-200">
-                {state.timer!.description}
-              </div>
-            )}
           </>
         ) : (
           <>
