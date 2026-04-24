@@ -57,7 +57,9 @@ function setOAuthStateCookie(
     secure: env.NODE_ENV === 'production',
     sameSite: 'lax',
     signed: true,
-    path: '/auth',
+    // Path '/' — the callback is served from /auth/... direct to the API, or
+    // /api/auth/... when proxied through Vercel. A root path covers both.
+    path: '/',
     maxAge: OAUTH_MAX_AGE_SEC,
   });
 }
@@ -153,13 +155,13 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
       // Replay guard: even if the cookie somehow survived past its maxAge, enforce iat.
       const nowSec = Math.floor(Date.now() / 1000);
       if (nowSec - cookie.iat > OAUTH_MAX_AGE_SEC) {
-        reply.clearCookie(OAUTH_STATE_COOKIE, { path: '/auth' });
+        reply.clearCookie(OAUTH_STATE_COOKIE, { path: '/' });
         await recordAttempt({ ip, success: false, reason: 'state_expired' });
         throw BadRequest('state_expired', 'OAuth state expired — please sign in again');
       }
 
       // Always clear the state cookie — single-use.
-      reply.clearCookie(OAUTH_STATE_COOKIE, { path: '/auth' });
+      reply.clearCookie(OAUTH_STATE_COOKIE, { path: '/' });
 
       let claims;
       try {
