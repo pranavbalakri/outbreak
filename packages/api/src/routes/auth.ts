@@ -78,6 +78,7 @@ function readOAuthStateCookie(
 
 function callbackRedirectUri(): string {
   const env = loadEnv();
+  if (env.OAUTH_CALLBACK_URL) return env.OAUTH_CALLBACK_URL;
   return `${env.API_ORIGIN}/auth/google/callback`;
 }
 

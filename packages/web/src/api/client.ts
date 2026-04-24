@@ -52,8 +52,13 @@ export function apiOrigin(): string {
 }
 
 export function wsUrl(path: string): string {
-  const url = new URL(API_ORIGIN);
+  // When API_ORIGIN is a path (e.g. "/api" via the Vercel proxy), build the
+  // WebSocket URL against the current window origin. Vercel's HTTP rewrites
+  // don't proxy WebSocket upgrades, so this will fail to connect in prod —
+  // that's a known gap; real-time timer sync is best-effort, and the rest of
+  // the app works fine without it.
+  const base = API_ORIGIN.startsWith('/') ? window.location.origin : API_ORIGIN;
+  const url = new URL(path, base);
   url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
-  url.pathname = path;
   return url.toString();
 }

@@ -9,6 +9,10 @@ const EnvSchema = z.object({
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
   GOOGLE_CLIENT_ID: z.string().default(''),
   GOOGLE_CLIENT_SECRET: z.string().default(''),
+  // When set, the Google OAuth redirect URI uses this value instead of
+  // API_ORIGIN. In prod we point this at the web origin + /api/... so the
+  // browser returns to the Vercel domain and cookies stay first-party.
+  OAUTH_CALLBACK_URL: z.string().default(''),
   // Optional observability. Empty string disables each.
   SENTRY_DSN: z.string().default(''),
   LOG_SHIPPER_URL: z.string().default(''),
