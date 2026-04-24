@@ -13,6 +13,9 @@ const EnvSchema = z.object({
   // API_ORIGIN. In prod we point this at the web origin + /api/... so the
   // browser returns to the Vercel domain and cookies stay first-party.
   OAUTH_CALLBACK_URL: z.string().default(''),
+  // Shared secret the GitHub Actions backup job presents to authorize
+  // fetching the full CSV. Keep this unset in dev to disable the endpoint.
+  EXPORT_SECRET: z.string().default(''),
   // Optional observability. Empty string disables each.
   SENTRY_DSN: z.string().default(''),
   LOG_SHIPPER_URL: z.string().default(''),

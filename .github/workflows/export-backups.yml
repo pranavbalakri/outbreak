@@ -1,0 +1,121 @@
+name: Export time-entry backups
+
+on:
+  schedule:
+    # Daily at 04:00 UTC — buffer past midnight so late-evening entries in
+    # North American timezones are captured on the correct calendar day.
+    - cron: '0 4 * * *'
+    # Monthly at 05:00 UTC on the 1st — one hour after the daily so the two
+    # don't race on the first day of the month.
+    - cron: '0 5 1 * *'
+  # Lets you trigger a backup by hand from the Actions tab. `range` picks
+  # which kind of export; `date` lets you target a specific day/month.
+  workflow_dispatch:
+    inputs:
+      range:
+        description: 'daily or monthly'
+        required: true
+        default: 'daily'
+      date:
+        description: 'YYYY-MM-DD (daily) or YYYY-MM (monthly) — defaults to yesterday / last month'
+        required: false
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Compute export range
+        id: range
+        env:
+          EVENT_SCHEDULE: ${{ github.event.schedule }}
+          INPUT_RANGE: ${{ github.event.inputs.range }}
+          INPUT_DATE: ${{ github.event.inputs.date }}
+        run: |
+          set -euo pipefail
+
+          # Decide daily vs monthly based on cron or manual input.
+          if [ -n "$INPUT_RANGE" ]; then
+            RANGE="$INPUT_RANGE"
+          elif [ "$EVENT_SCHEDULE" = "0 5 1 * *" ]; then
+            RANGE="monthly"
+          else
+            RANGE="daily"
+          fi
+
+          if [ "$RANGE" = "monthly" ]; then
+            if [ -n "${INPUT_DATE:-}" ]; then
+              MONTH="$INPUT_DATE"  # YYYY-MM
+            else
+              MONTH="$(date -u -d 'last month' +%Y-%m)"
+            fi
+            FROM="${MONTH}-01T00:00:00.000Z"
+            NEXT="$(date -u -d "${MONTH}-01 +1 month" +%Y-%m-%d)"
+            TO="${NEXT}T00:00:00.000Z"
+            LABEL="$MONTH"
+            PATH_IN_REPO="monthly/${MONTH}.csv"
+          else
+            if [ -n "${INPUT_DATE:-}" ]; then
+              DAY="$INPUT_DATE"  # YYYY-MM-DD
+            else
+              DAY="$(date -u -d 'yesterday' +%Y-%m-%d)"
+            fi
+            FROM="${DAY}T00:00:00.000Z"
+            NEXT="$(date -u -d "${DAY} +1 day" +%Y-%m-%d)"
+            TO="${NEXT}T00:00:00.000Z"
+            LABEL="$DAY"
+            PATH_IN_REPO="daily/${DAY}.csv"
+          fi
+
+          echo "range=$RANGE" >> "$GITHUB_OUTPUT"
+          echo "from=$FROM" >> "$GITHUB_OUTPUT"
+          echo "to=$TO" >> "$GITHUB_OUTPUT"
+          echo "label=$LABEL" >> "$GITHUB_OUTPUT"
+          echo "path_in_repo=$PATH_IN_REPO" >> "$GITHUB_OUTPUT"
+          echo "Exporting $RANGE $LABEL: $FROM → $TO"
+
+      - name: Fetch CSV from API
+        env:
+          API_URL: ${{ secrets.EXPORT_API_URL }}
+          EXPORT_SECRET: ${{ secrets.EXPORT_SECRET }}
+          FROM: ${{ steps.range.outputs.from }}
+          TO: ${{ steps.range.outputs.to }}
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          curl --fail-with-body --silent --show-error \
+            -H "X-Export-Secret: $EXPORT_SECRET" \
+            --get \
+            --data-urlencode "from=$FROM" \
+            --data-urlencode "to=$TO" \
+            "$API_URL/exports/time-entries.csv" \
+            -o "out/export.csv"
+          echo "Fetched $(wc -l < out/export.csv) lines"
+
+      - name: Check out the backup repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ secrets.BACKUP_REPO }}
+          token: ${{ secrets.BACKUP_PAT }}
+          path: backup-repo
+
+      - name: Commit CSV to backup repo
+        env:
+          PATH_IN_REPO: ${{ steps.range.outputs.path_in_repo }}
+          LABEL: ${{ steps.range.outputs.label }}
+          RANGE: ${{ steps.range.outputs.range }}
+        run: |
+          set -euo pipefail
+          cd backup-repo
+          mkdir -p "$(dirname "$PATH_IN_REPO")"
+          cp ../out/export.csv "$PATH_IN_REPO"
+          git config user.name "outbreak-backup-bot"
+          git config user.email "backup-bot@users.noreply.github.com"
+          git add "$PATH_IN_REPO"
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "${RANGE} backup for ${LABEL}"
+          git push

@@ -22,6 +22,7 @@ import { registerApiTokenRoutes } from './routes/apiTokens.js';
 import { registerWebSocketRoutes } from './routes/ws.js';
 import { registerFeedbackRoutes } from './routes/feedback.js';
 import { registerUsageRoutes } from './routes/usage.js';
+import { registerExportRoutes } from './routes/exports.js';
 import { initObservability } from './lib/observability.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
@@ -67,6 +68,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await registerWebSocketRoutes(app);
   await registerFeedbackRoutes(app);
   await registerUsageRoutes(app);
+  await registerExportRoutes(app);
 
   return app;
 }
