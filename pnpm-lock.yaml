@@ -32,6 +32,9 @@ importers:
 
   packages/api:
     dependencies:
+      '@breaklog/shared':
+        specifier: workspace:*
+        version: link:../shared
       '@fastify/cookie':
         specifier: ^11.0.1
         version: 11.0.2
@@ -47,9 +50,6 @@ importers:
       '@fastify/websocket':
         specifier: ^11.0.1
         version: 11.2.0
-      '@outbreak/shared':
-        specifier: workspace:*
-        version: link:../shared
       '@prisma/client':
         specifier: 6.19.3
         version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
@@ -99,7 +99,7 @@ importers:
 
   packages/extension:
     dependencies:
-      '@outbreak/shared':
+      '@breaklog/shared':
         specifier: workspace:*
         version: link:../shared
       react:
@@ -152,7 +152,7 @@ importers:
 
   packages/web:
     dependencies:
-      '@outbreak/shared':
+      '@breaklog/shared':
         specifier: workspace:*
         version: link:../shared
       '@tanstack/react-query':
