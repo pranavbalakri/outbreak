@@ -423,7 +423,7 @@ function DataExportTab() {
     const href = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = href;
-    a.download = `outbreak_full_${from.toISOString().slice(0, 10)}_${to.toISOString().slice(0, 10)}.csv`;
+    a.download = `breaklog_full_${from.toISOString().slice(0, 10)}_${to.toISOString().slice(0, 10)}.csv`;
     document.body.appendChild(a);
     a.click();
     a.remove();

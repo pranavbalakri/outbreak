@@ -1,4 +1,4 @@
-import type { FolderDto, ProjectDto, TimeEntryDto, UserDto } from '@outbreak/shared';
+import type { FolderDto, ProjectDto, TimeEntryDto, UserDto } from '@breaklog/shared';
 import { API_ORIGIN } from './config.js';
 import { readStorage, writeStorage } from './storage.js';
 

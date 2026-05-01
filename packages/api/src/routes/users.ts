@@ -4,7 +4,7 @@ import {
   CreateUserInputSchema,
   UpdateRateInputSchema,
   UpdateUserInputSchema,
-} from '@outbreak/shared';
+} from '@breaklog/shared';
 import { prisma } from '../db.js';
 import { authenticate, requireAdmin } from '../lib/auth.js';
 import { toUserDto } from '../lib/dto.js';

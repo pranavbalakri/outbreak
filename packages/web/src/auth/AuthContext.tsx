@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import type { UserDto } from '@outbreak/shared';
+import type { UserDto } from '@breaklog/shared';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ApiError } from '../api/client.js';
 import { fetchMe, logout as apiLogout } from '../api/queries.js';

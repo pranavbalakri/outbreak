@@ -1,5 +1,5 @@
 {
-  "name": "outbreak",
+  "name": "breaklog",
   "private": true,
   "version": "0.1.0",
   "description": "Internal time & project tracking for debate coaching",
@@ -14,9 +14,9 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md,yml,yaml}\"",
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
-    "db:migrate": "pnpm --filter @outbreak/api db:migrate",
-    "db:studio": "pnpm --filter @outbreak/api db:studio",
-    "db:seed": "pnpm --filter @outbreak/api db:seed"
+    "db:migrate": "pnpm --filter @breaklog/api db:migrate",
+    "db:studio": "pnpm --filter @breaklog/api db:studio",
+    "db:seed": "pnpm --filter @breaklog/api db:seed"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

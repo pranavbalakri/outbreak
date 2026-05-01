@@ -1,13 +1,13 @@
 import { execSync } from 'node:child_process';
 import type { BrowserContext } from '@playwright/test';
 
-const SESSION_COOKIE = 'outbreak_session';
+const SESSION_COOKIE = 'breaklog_session';
 const API_URL = process.env['E2E_API_URL'] ?? 'http://127.0.0.1:4000';
 
 export function mintSession(userId: string): string {
   // Calls the API package's dev script (same TS runtime, same JWT secret).
   const out = execSync(
-    `pnpm --filter @outbreak/api exec tsx scripts/mint-dev-session.ts ${userId}`,
+    `pnpm --filter @breaklog/api exec tsx scripts/mint-dev-session.ts ${userId}`,
     { env: process.env, stdio: ['ignore', 'pipe', 'ignore'] },
   );
   return out.toString().trim();

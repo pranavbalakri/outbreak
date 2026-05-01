@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { CreateFeedbackInputSchema } from '@outbreak/shared';
+import { CreateFeedbackInputSchema } from '@breaklog/shared';
 import { prisma } from '../db.js';
 import { authenticate, requireAdmin } from '../lib/auth.js';
 import { NotFound } from '../errors.js';

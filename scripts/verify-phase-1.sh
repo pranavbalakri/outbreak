@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# End-to-end smoke test for Outbreak Phase 1.
+# End-to-end smoke test for Breaklog Phase 1.
 # Starts Postgres (if needed) and the API on an ephemeral port, runs checks,
 # prints PASS/FAIL per check, exits non-zero on any failure.
 #
@@ -13,8 +13,8 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 API_DIR="$ROOT/packages/api"
 API_PORT="${API_PORT_OVERRIDE:-4321}"
 API_URL="http://localhost:$API_PORT"
-DB_URL="postgresql://outbreak:outbreak@localhost:5433/outbreak"
-API_LOG="$(mktemp -t outbreak-verify.XXXXXX.log)"
+DB_URL="postgresql://breaklog:breaklog@localhost:5433/breaklog"
+API_LOG="$(mktemp -t breaklog-verify.XXXXXX.log)"
 API_PID=""
 
 # ----- cleanup -----
@@ -116,20 +116,20 @@ else
 fi
 
 # Start postgres if not already up.
-if ! docker ps --format '{{.Names}}' | grep -q '^outbreak-postgres$'; then
+if ! docker ps --format '{{.Names}}' | grep -q '^breaklog-postgres$'; then
   info "starting postgres..."
   docker compose -f "$ROOT/docker-compose.yml" up -d postgres >/dev/null
 fi
 
 # Wait for DB to be ready.
 for _ in {1..30}; do
-  if docker exec outbreak-postgres pg_isready -U outbreak -d outbreak >/dev/null 2>&1; then
+  if docker exec breaklog-postgres pg_isready -U breaklog -d breaklog >/dev/null 2>&1; then
     pass "postgres is ready on :5433"
     break
   fi
   sleep 1
 done
-if ! docker exec outbreak-postgres pg_isready -U outbreak -d outbreak >/dev/null 2>&1; then
+if ! docker exec breaklog-postgres pg_isready -U breaklog -d breaklog >/dev/null 2>&1; then
   fail "postgres didn't come up in 30s"
   exit 1
 fi
@@ -200,7 +200,7 @@ curl_code 404 "unknown route returns 404 JSON" "$API_URL/nope" >/dev/null
 # Validation error shape — POST a tag with empty name
 body=$(curl_code 400 "Zod validation error returns 400" \
   -X POST -H "Content-Type: application/json" \
-  -H "Cookie: outbreak_session=$ADMIN_TOKEN" \
+  -H "Cookie: breaklog_session=$ADMIN_TOKEN" \
   -d '{"name":""}' "$API_URL/tags")
 if printf '%s' "$body" | grep -q '"code":"validation_error"'; then
   pass "validation error has code validation_error"
@@ -212,7 +212,7 @@ fi
 section "5. Step 6 — Session auth (Google OAuth stubbed via dev token)"
 
 body=$(curl_code 200 "/auth/me with valid session" \
-  -H "Cookie: outbreak_session=$ADMIN_TOKEN" "$API_URL/auth/me")
+  -H "Cookie: breaklog_session=$ADMIN_TOKEN" "$API_URL/auth/me")
 if printf '%s' "$body" | grep -q '"role":"ADMIN"'; then
   pass "/auth/me returns admin role"
 else
@@ -220,7 +220,7 @@ else
 fi
 
 curl_code 401 "/auth/me with bad cookie returns 401" \
-  -H "Cookie: outbreak_session=not.a.jwt" "$API_URL/auth/me" >/dev/null
+  -H "Cookie: breaklog_session=not.a.jwt" "$API_URL/auth/me" >/dev/null
 
 # Google start without GOOGLE_CLIENT_ID → 400
 curl_code 400 "/auth/google/start without Google config returns 400" \
@@ -234,7 +234,7 @@ section "6. Step 7 — Deactivation lockout & audit log"
 # Deactivate Bob mid-session and expect his next call to 401.
 psql "$DB_URL" -c "UPDATE users SET is_active=false WHERE id='$BOB_ID';" >/dev/null
 curl_code 401 "deactivated user is rejected mid-session" \
-  -H "Cookie: outbreak_session=$BOB_TOKEN" "$API_URL/auth/me" >/dev/null
+  -H "Cookie: breaklog_session=$BOB_TOKEN" "$API_URL/auth/me" >/dev/null
 psql "$DB_URL" -c "UPDATE users SET is_active=true WHERE id='$BOB_ID';" >/dev/null
 
 # Auth audit table should exist and be writable (we haven't exercised Google, so
@@ -255,10 +255,10 @@ ORIG_ENTRY_RATE=$(psql "$DB_URL" -tA -c "SELECT rate_cents_at_entry FROM time_en
 
 # Change rate twice.
 curl -s -X PATCH -H "Content-Type: application/json" \
-  -H "Cookie: outbreak_session=$ADMIN_TOKEN" \
+  -H "Cookie: breaklog_session=$ADMIN_TOKEN" \
   -d '{"rateCents":7777}' "$API_URL/users/$ALICE_ID/rate" >/dev/null
 curl -s -X PATCH -H "Content-Type: application/json" \
-  -H "Cookie: outbreak_session=$ADMIN_TOKEN" \
+  -H "Cookie: breaklog_session=$ADMIN_TOKEN" \
   -d '{"rateCents":8888}' "$API_URL/users/$ALICE_ID/rate" >/dev/null
 
 NEW_RATE=$(psql "$DB_URL" -tA -c "SELECT current_rate_cents FROM users WHERE id='$ALICE_ID';")
@@ -286,7 +286,7 @@ psql "$DB_URL" -c "
 # Non-admin change → 403
 curl_code 403 "instructor cannot change rates" \
   -X PATCH -H "Content-Type: application/json" \
-  -H "Cookie: outbreak_session=$ALICE_TOKEN" \
+  -H "Cookie: breaklog_session=$ALICE_TOKEN" \
   -d '{"rateCents":9999}' "$API_URL/users/$ALICE_ID/rate" >/dev/null
 
 # ----- 8. Step 9 — Folders + Tags -----
@@ -294,19 +294,19 @@ section "8. Step 9 — Folders + Tags"
 
 folder_resp=$(curl_code 200 "admin creates folder" \
   -X POST -H "Content-Type: application/json" \
-  -H "Cookie: outbreak_session=$ADMIN_TOKEN" \
+  -H "Cookie: breaklog_session=$ADMIN_TOKEN" \
   -d '{"name":"verify-phase-1-folder"}' "$API_URL/folders")
 FOLDER_ID=$(printf '%s' "$folder_resp" | json_field folder.id)
 
 curl_code 403 "instructor cannot create folder" \
   -X POST -H "Content-Type: application/json" \
-  -H "Cookie: outbreak_session=$ALICE_TOKEN" \
+  -H "Cookie: breaklog_session=$ALICE_TOKEN" \
   -d '{"name":"should-fail"}' "$API_URL/folders" >/dev/null
 
 # Create a tag
 tag_resp=$(curl_code 200 "admin creates tag" \
   -X POST -H "Content-Type: application/json" \
-  -H "Cookie: outbreak_session=$ADMIN_TOKEN" \
+  -H "Cookie: breaklog_session=$ADMIN_TOKEN" \
   -d '{"name":"verify-phase-1-tag"}' "$API_URL/tags")
 TAG_ID=$(printf '%s' "$tag_resp" | json_field tag.id)
 
@@ -316,36 +316,36 @@ psql "$DB_URL" -c "
   VALUES ('verify-phase-1-proj-tmp', '$FOLDER_ID', 'verify-phase-1-tmp', 60, 60, 'NOT_STARTED', '$ADMIN_ID', NOW());
 " >/dev/null
 curl_code 409 "deleting folder with active projects returns 409" \
-  -X DELETE -H "Cookie: outbreak_session=$ADMIN_TOKEN" \
+  -X DELETE -H "Cookie: breaklog_session=$ADMIN_TOKEN" \
   "$API_URL/folders/$FOLDER_ID" >/dev/null
 psql "$DB_URL" -c "DELETE FROM projects WHERE id='verify-phase-1-proj-tmp';" >/dev/null
 
 # Now delete works
 curl_code 200 "empty folder deletes" \
-  -X DELETE -H "Cookie: outbreak_session=$ADMIN_TOKEN" \
+  -X DELETE -H "Cookie: breaklog_session=$ADMIN_TOKEN" \
   "$API_URL/folders/$FOLDER_ID" >/dev/null
 
 # Tag cleanup
-curl -s -X DELETE -H "Cookie: outbreak_session=$ADMIN_TOKEN" "$API_URL/tags/$TAG_ID" >/dev/null
+curl -s -X DELETE -H "Cookie: breaklog_session=$ADMIN_TOKEN" "$API_URL/tags/$TAG_ID" >/dev/null
 
 # ----- 9. Step 10 — Projects CRUD + visibility -----
 section "9. Step 10 — Projects + assigned-only visibility"
 
 proj_resp=$(curl_code 200 "admin creates Bob-only project" \
   -X POST -H "Content-Type: application/json" \
-  -H "Cookie: outbreak_session=$ADMIN_TOKEN" \
+  -H "Cookie: breaklog_session=$ADMIN_TOKEN" \
   -d "{\"folderId\":\"$SEASON_FOLDER\",\"name\":\"verify-phase-1-bob\",\"estimatedMinutes\":60,\"assigneeIds\":[\"$BOB_ID\"]}" \
   "$API_URL/projects")
 PROJ_ID=$(printf '%s' "$proj_resp" | json_field project.id)
 
-bob_list=$(curl -s -H "Cookie: outbreak_session=$BOB_TOKEN" "$API_URL/projects")
+bob_list=$(curl -s -H "Cookie: breaklog_session=$BOB_TOKEN" "$API_URL/projects")
 if printf '%s' "$bob_list" | grep -q "verify-phase-1-bob"; then
   pass "bob sees project he is assigned to"
 else
   fail "bob did not see his project"
 fi
 
-alice_list=$(curl -s -H "Cookie: outbreak_session=$ALICE_TOKEN" "$API_URL/projects")
+alice_list=$(curl -s -H "Cookie: breaklog_session=$ALICE_TOKEN" "$API_URL/projects")
 if printf '%s' "$alice_list" | grep -q "verify-phase-1-bob"; then
   fail "alice can see bob's project (should be hidden)"
 else
@@ -353,15 +353,15 @@ else
 fi
 
 curl_code 403 "alice GET /projects/:id on bob's project → 403" \
-  -H "Cookie: outbreak_session=$ALICE_TOKEN" "$API_URL/projects/$PROJ_ID" >/dev/null
+  -H "Cookie: breaklog_session=$ALICE_TOKEN" "$API_URL/projects/$PROJ_ID" >/dev/null
 
 curl_code 200 "admin adds alice as assignee" \
   -X POST -H "Content-Type: application/json" \
-  -H "Cookie: outbreak_session=$ADMIN_TOKEN" \
+  -H "Cookie: breaklog_session=$ADMIN_TOKEN" \
   -d "{\"userId\":\"$ALICE_ID\"}" \
   "$API_URL/projects/$PROJ_ID/assignees" >/dev/null
 
-alice_list=$(curl -s -H "Cookie: outbreak_session=$ALICE_TOKEN" "$API_URL/projects")
+alice_list=$(curl -s -H "Cookie: breaklog_session=$ALICE_TOKEN" "$API_URL/projects")
 if printf '%s' "$alice_list" | grep -q "verify-phase-1-bob"; then
   pass "alice now sees project after being added"
 else
@@ -370,7 +370,7 @@ fi
 
 curl_code 403 "instructor cannot create projects" \
   -X POST -H "Content-Type: application/json" \
-  -H "Cookie: outbreak_session=$ALICE_TOKEN" \
+  -H "Cookie: breaklog_session=$ALICE_TOKEN" \
   -d "{\"folderId\":\"$SEASON_FOLDER\",\"name\":\"verify-phase-1-illegal\",\"estimatedMinutes\":30}" \
   "$API_URL/projects" >/dev/null
 
@@ -379,7 +379,7 @@ section "10. Step 11 — Task assignee inheritance"
 
 task_resp=$(curl_code 200 "admin creates task on Bob+Alice project" \
   -X POST -H "Content-Type: application/json" \
-  -H "Cookie: outbreak_session=$ADMIN_TOKEN" \
+  -H "Cookie: breaklog_session=$ADMIN_TOKEN" \
   -d '{"name":"verify-phase-1-task","estimatedMinutes":30}' \
   "$API_URL/projects/$PROJ_ID/tasks")
 TASK_ID=$(printf '%s' "$task_resp" | json_field task.id)
@@ -390,7 +390,7 @@ TASK_ASSIGN_COUNT=$(psql "$DB_URL" -tA -c "SELECT COUNT(*) FROM task_assignments
   || fail "task has $TASK_ASSIGN_COUNT assignees (expected 2)"
 
 # Remove Alice from project
-curl -s -X DELETE -H "Cookie: outbreak_session=$ADMIN_TOKEN" \
+curl -s -X DELETE -H "Cookie: breaklog_session=$ADMIN_TOKEN" \
   "$API_URL/projects/$PROJ_ID/assignees/$ALICE_ID" >/dev/null
 
 AFTER_COUNT=$(psql "$DB_URL" -tA -c "SELECT COUNT(*) FROM task_assignments WHERE task_id='$TASK_ID';")
@@ -404,7 +404,7 @@ section "11. Step 12 — Time entries"
 # Alice creates an unassigned entry
 te_resp=$(curl_code 200 "alice creates unassigned time entry" \
   -X POST -H "Content-Type: application/json" \
-  -H "Cookie: outbreak_session=$ALICE_TOKEN" \
+  -H "Cookie: breaklog_session=$ALICE_TOKEN" \
   -d '{"startedAt":"2026-04-15T14:00:00Z","endedAt":"2026-04-15T15:30:00Z","description":"verify-phase-1-entry","isBillable":true}' \
   "$API_URL/time-entries")
 ENTRY_ID=$(printf '%s' "$te_resp" | json_field entry.id)
@@ -414,7 +414,7 @@ ENTRY_PROJECT=$(printf '%s' "$te_resp" | python3 -c "import json,sys; print(json
   || fail "entry had projectId=$ENTRY_PROJECT (expected null)"
 
 # Bob cannot see Alice's entry
-bob_entries=$(curl -s -H "Cookie: outbreak_session=$BOB_TOKEN" "$API_URL/time-entries")
+bob_entries=$(curl -s -H "Cookie: breaklog_session=$BOB_TOKEN" "$API_URL/time-entries")
 if printf '%s' "$bob_entries" | grep -q "verify-phase-1-entry"; then
   fail "bob sees alice's entry (should be hidden)"
 else
@@ -422,7 +422,7 @@ else
 fi
 
 # unassigned filter
-unassigned_resp=$(curl -s -H "Cookie: outbreak_session=$ALICE_TOKEN" "$API_URL/time-entries?unassigned=true")
+unassigned_resp=$(curl -s -H "Cookie: breaklog_session=$ALICE_TOKEN" "$API_URL/time-entries?unassigned=true")
 if printf '%s' "$unassigned_resp" | grep -q "verify-phase-1-entry"; then
   pass "unassigned=true filter returns the entry"
 else
@@ -431,7 +431,7 @@ fi
 
 # Admin attaches the entry to a project
 curl -s -X PATCH -H "Content-Type: application/json" \
-  -H "Cookie: outbreak_session=$ADMIN_TOKEN" \
+  -H "Cookie: breaklog_session=$ADMIN_TOKEN" \
   -d "{\"projectId\":\"$PROJ_ID\"}" \
   "$API_URL/time-entries/$ENTRY_ID" >/dev/null
 ATTACHED_PROJ=$(psql "$DB_URL" -tA -c "SELECT project_id FROM time_entries WHERE id='$ENTRY_ID';")
@@ -440,7 +440,7 @@ ATTACHED_PROJ=$(psql "$DB_URL" -tA -c "SELECT project_id FROM time_entries WHERE
   || fail "entry project is $ATTACHED_PROJ (expected $PROJ_ID)"
 
 # Now it's NOT in unassigned
-unassigned_resp=$(curl -s -H "Cookie: outbreak_session=$ALICE_TOKEN" "$API_URL/time-entries?unassigned=true")
+unassigned_resp=$(curl -s -H "Cookie: breaklog_session=$ALICE_TOKEN" "$API_URL/time-entries?unassigned=true")
 if printf '%s' "$unassigned_resp" | grep -q "$ENTRY_ID"; then
   fail "entry still appears as unassigned after attach"
 else
@@ -450,7 +450,7 @@ fi
 # endedAt < startedAt → 400
 curl_code 400 "endedAt < startedAt returns 400" \
   -X POST -H "Content-Type: application/json" \
-  -H "Cookie: outbreak_session=$ALICE_TOKEN" \
+  -H "Cookie: breaklog_session=$ALICE_TOKEN" \
   -d '{"startedAt":"2026-04-15T15:00:00Z","endedAt":"2026-04-15T14:00:00Z"}' \
   "$API_URL/time-entries" >/dev/null
 
@@ -462,12 +462,12 @@ psql "$DB_URL" -c "
 
 curl_code 409 "PATCH on locked week returns 409" \
   -X PATCH -H "Content-Type: application/json" \
-  -H "Cookie: outbreak_session=$ADMIN_TOKEN" \
+  -H "Cookie: breaklog_session=$ADMIN_TOKEN" \
   -d '{"description":"should fail"}' \
   "$API_URL/time-entries/$ENTRY_ID" >/dev/null
 
 curl_code 409 "DELETE on locked week returns 409" \
-  -X DELETE -H "Cookie: outbreak_session=$ADMIN_TOKEN" \
+  -X DELETE -H "Cookie: breaklog_session=$ADMIN_TOKEN" \
   "$API_URL/time-entries/$ENTRY_ID" >/dev/null
 
 psql "$DB_URL" -c "DELETE FROM week_locks WHERE id='verify-phase-1-lock';" >/dev/null
@@ -475,14 +475,14 @@ psql "$DB_URL" -c "DELETE FROM week_locks WHERE id='verify-phase-1-lock';" >/dev
 # Task-project mismatch
 season_other=$(psql "$DB_URL" -tA -c "SELECT id FROM projects WHERE name='Weekly Team Sync Notes';")
 mismatched_task_resp=$(curl -s -X POST -H "Content-Type: application/json" \
-  -H "Cookie: outbreak_session=$ADMIN_TOKEN" \
+  -H "Cookie: breaklog_session=$ADMIN_TOKEN" \
   -d '{"name":"verify-phase-1-mismatch","estimatedMinutes":30}' \
   "$API_URL/projects/$season_other/tasks")
 MISMATCH_TASK_ID=$(printf '%s' "$mismatched_task_resp" | json_field task.id)
 
 curl_code 409 "taskId from different project → 409" \
   -X PATCH -H "Content-Type: application/json" \
-  -H "Cookie: outbreak_session=$ADMIN_TOKEN" \
+  -H "Cookie: breaklog_session=$ADMIN_TOKEN" \
   -d "{\"projectId\":\"$PROJ_ID\",\"taskId\":\"$MISMATCH_TASK_ID\"}" \
   "$API_URL/time-entries/$ENTRY_ID" >/dev/null
 

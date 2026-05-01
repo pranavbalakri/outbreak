@@ -169,7 +169,7 @@ export async function renderReportPdf(input: ReportPdfInput): Promise<Buffer> {
     Document,
     null,
     h(Page, { size: 'LETTER', style: styles.page }, [
-      h(Text, { key: 't', style: styles.title }, 'Outbreak — Report'),
+      h(Text, { key: 't', style: styles.title }, 'Breaklog — Report'),
       h(
         Text,
         { key: 's', style: styles.subtitle },

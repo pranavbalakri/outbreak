@@ -15,7 +15,7 @@ import {
 import { BadRequest, Forbidden } from '../errors.js';
 import { toUserDto } from '../lib/dto.js';
 
-const OAUTH_STATE_COOKIE = 'outbreak_oauth_state';
+const OAUTH_STATE_COOKIE = 'breaklog_oauth_state';
 const OAUTH_MAX_AGE_SEC = 10 * 60; // 10 minutes
 
 async function recordAttempt(input: {
@@ -224,7 +224,7 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
       if (!user) {
         await recordAttempt({ ip, email: claims.email, success: false, reason: 'unknown_user' });
         throw Forbidden(
-          'Your Google account is not authorized for Outbreak. Contact your admin.',
+          'Your Google account is not authorized for Breaklog. Contact your admin.',
           'unknown_user',
         );
       }
@@ -302,8 +302,8 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
     const user = await authenticate(request);
     const { label, source } = MintTokenBody.parse(request.body ?? {});
 
-    // 32 random bytes, base64url. 256 bits is plenty; outbreak_ prefix makes leaks self-identifying.
-    const raw = `outbreak_${randomBytes(32).toString('base64url')}`;
+    // 32 random bytes, base64url. 256 bits is plenty; breaklog_ prefix makes leaks self-identifying.
+    const raw = `breaklog_${randomBytes(32).toString('base64url')}`;
     const tokenHash = createHash('sha256').update(raw).digest('hex');
     const stored = await prisma.apiToken.create({
       data: {

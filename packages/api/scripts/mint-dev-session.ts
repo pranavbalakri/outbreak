@@ -1,6 +1,6 @@
 // Dev-only: mints a session JWT for the seeded admin (or a given user id)
 // so you can exercise authed endpoints without going through Google.
-// Usage: pnpm --filter @outbreak/api tsx scripts/mint-dev-session.ts [userId]
+// Usage: pnpm --filter @breaklog/api tsx scripts/mint-dev-session.ts [userId]
 import { SignJWT } from 'jose';
 import { prisma } from '../src/db.js';
 import { loadEnv } from '../src/env.js';

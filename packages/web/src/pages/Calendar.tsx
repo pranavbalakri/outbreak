@@ -5,7 +5,7 @@ import type {
   ProjectDto,
   TimeEntryDto,
   UserDto,
-} from '@outbreak/shared';
+} from '@breaklog/shared';
 import {
   createTimeEntry,
   deleteTimeEntry,

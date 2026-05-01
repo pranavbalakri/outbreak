@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { CreateTagInputSchema } from '@outbreak/shared';
+import { CreateTagInputSchema } from '@breaklog/shared';
 import { prisma } from '../db.js';
 import { requireAdmin, requireUser } from '../lib/auth.js';
 import { toTagDto } from '../lib/dto.js';

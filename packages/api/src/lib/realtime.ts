@@ -1,5 +1,5 @@
 import type { WebSocket } from 'ws';
-import type { TimerEvent } from '@outbreak/shared';
+import type { TimerEvent } from '@breaklog/shared';
 
 // In-process fan-out. Fine for a single API instance; swap for Redis pub/sub
 // the moment we run more than one.

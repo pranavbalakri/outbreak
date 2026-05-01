@@ -10,7 +10,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import type { ReportGroupBy } from '@outbreak/shared';
+import type { ReportGroupBy } from '@breaklog/shared';
 import { Badge, Button, Card, Field, Select, inputClass } from '../components/ui.js';
 import {
   fetchFolders,
@@ -150,7 +150,7 @@ export function ReportsPage() {
 
   const onExportCsv = async () => {
     const url = reportCsvUrl(filters);
-    const filename = `outbreak_${from.slice(0, 10)}_${to.slice(0, 10)}.csv`;
+    const filename = `breaklog_${from.slice(0, 10)}_${to.slice(0, 10)}.csv`;
     try {
       await downloadCsv(url, filename);
     } catch (err) {
@@ -160,7 +160,7 @@ export function ReportsPage() {
 
   const onExportPdf = async () => {
     const url = reportPdfUrl(filters);
-    const filename = `outbreak_${from.slice(0, 10)}_${to.slice(0, 10)}.pdf`;
+    const filename = `breaklog_${from.slice(0, 10)}_${to.slice(0, 10)}.pdf`;
     try {
       await downloadCsv(url, filename);
     } catch (err) {

@@ -1,5 +1,5 @@
 {
-  "name": "@outbreak/extension",
+  "name": "@breaklog/extension",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@outbreak/shared": "workspace:*",
+    "@breaklog/shared": "workspace:*",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

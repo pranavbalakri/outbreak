@@ -20,8 +20,8 @@
     "verbatimModuleSyntax": true,
     "baseUrl": ".",
     "paths": {
-      "@outbreak/shared": ["packages/shared/src/index.ts"],
-      "@outbreak/shared/*": ["packages/shared/src/*"]
+      "@breaklog/shared": ["packages/shared/src/index.ts"],
+      "@breaklog/shared/*": ["packages/shared/src/*"]
     }
   }
 }

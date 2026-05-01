@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { UserDto } from '@outbreak/shared';
+import type { UserDto } from '@breaklog/shared';
 import { Badge, Button, Card, Field, Modal, Select, inputClass } from '../components/ui.js';
 import { useConfirm } from '../components/Confirm.js';
 import {

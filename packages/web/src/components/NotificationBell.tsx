@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { NotificationDto } from '@outbreak/shared';
+import type { NotificationDto } from '@breaklog/shared';
 import {
   fetchNotifications,
   markAllNotificationsRead,

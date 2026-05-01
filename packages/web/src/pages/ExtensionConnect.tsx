@@ -59,7 +59,7 @@ export function ExtensionConnectPage() {
         {error ? (
           <div className="text-red-600">{error}</div>
         ) : (
-          <div>Connecting the Outbreak extension…</div>
+          <div>Connecting the Breaklog extension…</div>
         )}
       </Card>
     </div>

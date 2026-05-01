@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { TimeEntrySource } from '@prisma/client';
 import { z } from 'zod';
-import type { UsageSummary } from '@outbreak/shared';
+import type { UsageSummary } from '@breaklog/shared';
 import { prisma } from '../db.js';
 import { requireAdmin } from '../lib/auth.js';
 

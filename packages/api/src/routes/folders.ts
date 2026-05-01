@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { CreateFolderInputSchema, UpdateFolderInputSchema } from '@outbreak/shared';
+import { CreateFolderInputSchema, UpdateFolderInputSchema } from '@breaklog/shared';
 import { prisma } from '../db.js';
 import { requireAdmin, requireUser } from '../lib/auth.js';
 import { toFolderDto } from '../lib/dto.js';

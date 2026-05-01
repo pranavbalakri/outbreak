@@ -6,7 +6,7 @@ import type {
   TaskDto,
   TimeEntryDto,
   UserDto,
-} from '@outbreak/shared';
+} from '@breaklog/shared';
 
 export function toUserDto(u: User): UserDto {
   return {

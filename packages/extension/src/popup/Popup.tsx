@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { FolderDto, ProjectDto, TimeEntryDto } from '@outbreak/shared';
+import type { FolderDto, ProjectDto, TimeEntryDto } from '@breaklog/shared';
 import { WEB_ORIGIN } from '../lib/config.js';
 import { readStorage, writeStorage, clearSession } from '../lib/storage.js';
 import {
@@ -198,7 +198,7 @@ export function Popup() {
       <Shell>
         <div className="flex flex-col items-center px-5 py-8 text-center">
           <img src="/src/icons/icon48.png" alt="" className="mb-3 h-10 w-10" />
-          <div className="text-base font-semibold">Outbreak</div>
+          <div className="text-base font-semibold">Breaklog</div>
           <div className="mt-1 text-xs text-ink-200">For Break Debate</div>
           <button
             onClick={() => void signIn()}
@@ -227,7 +227,7 @@ export function Popup() {
       <header className="flex items-center justify-between border-b border-ink-400 px-4 py-2.5">
         <div className="flex items-center gap-2">
           <img src="/src/icons/icon48.png" alt="" className="h-5 w-5" />
-          <span className="text-sm font-semibold">outbreak</span>
+          <span className="text-sm font-semibold">Breaklog</span>
         </div>
         <button
           onClick={() => void signOut()}

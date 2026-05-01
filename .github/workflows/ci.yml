@@ -22,7 +22,7 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @outbreak/api db:generate
+      - run: pnpm --filter @breaklog/api db:generate
       - run: pnpm typecheck
       - run: pnpm lint
 
@@ -32,18 +32,18 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_USER: outbreak
-          POSTGRES_PASSWORD: outbreak
-          POSTGRES_DB: outbreak_test
+          POSTGRES_USER: breaklog
+          POSTGRES_PASSWORD: breaklog
+          POSTGRES_DB: breaklog_test
         ports:
           - 5433:5432
         options: >-
-          --health-cmd="pg_isready -U outbreak -d outbreak_test"
+          --health-cmd="pg_isready -U breaklog -d breaklog_test"
           --health-interval=5s
           --health-timeout=5s
           --health-retries=10
     env:
-      DATABASE_URL: postgresql://outbreak:outbreak@localhost:5433/outbreak_test?schema=public
+      DATABASE_URL: postgresql://breaklog:breaklog@localhost:5433/breaklog_test?schema=public
       JWT_SECRET: test-test-test-test-test-test-test-test-test-test
       NODE_ENV: test
     steps:
@@ -56,9 +56,9 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @outbreak/api db:generate
-      - run: pnpm --filter @outbreak/api exec prisma migrate deploy
-      - run: pnpm --filter @outbreak/api test
+      - run: pnpm --filter @breaklog/api db:generate
+      - run: pnpm --filter @breaklog/api exec prisma migrate deploy
+      - run: pnpm --filter @breaklog/api test
 
   web-tests:
     runs-on: ubuntu-latest
@@ -72,5 +72,5 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @outbreak/api db:generate
-      - run: pnpm --filter @outbreak/web test
+      - run: pnpm --filter @breaklog/api db:generate
+      - run: pnpm --filter @breaklog/web test

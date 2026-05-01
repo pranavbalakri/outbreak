@@ -14,8 +14,8 @@ export function LoginPage() {
     <div className="flex min-h-screen items-center justify-center px-6">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center text-center">
-          <img src="/outbreak-logo.png" alt="Outbreak" className="mb-5 h-10 w-10" />
-          <h1 className="text-2xl font-semibold tracking-tight">Sign in to Outbreak</h1>
+          <img src="/breaklog-logo.png" alt="Breaklog" className="mb-5 h-10 w-10" />
+          <h1 className="text-2xl font-semibold tracking-tight">Sign in to Breaklog</h1>
           <p className="mt-2 text-sm text-ink-200">
             For Break Debate · internal time &amp; project tracking
           </p>

@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { StartTimerInputSchema } from '@outbreak/shared';
+import { StartTimerInputSchema } from '@breaklog/shared';
 import { prisma } from '../db.js';
 import { authenticate } from '../lib/auth.js';
 import { toTimeEntryDto } from '../lib/dto.js';

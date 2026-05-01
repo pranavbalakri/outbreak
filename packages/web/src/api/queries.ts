@@ -6,7 +6,7 @@ import type {
   TimeEntryDto,
   UpcomingProjectDto,
   UserDto,
-} from '@outbreak/shared';
+} from '@breaklog/shared';
 import { api, apiOrigin } from './client.js';
 
 // --- Auth
@@ -211,7 +211,7 @@ import type {
   NotificationDto,
   WeekSummary,
   ApiTokenDto,
-} from '@outbreak/shared';
+} from '@breaklog/shared';
 
 export interface ReportRangeFilters {
   from: string;
@@ -326,7 +326,7 @@ export const unlockWeek = (isoYear: number, isoWeek: number) =>
   api(`/weeks/${isoYear}/${isoWeek}/lock`, { method: 'DELETE' });
 
 // --- Feedback
-import type { FeedbackDto, UsageSummary } from '@outbreak/shared';
+import type { FeedbackDto, UsageSummary } from '@breaklog/shared';
 
 export const submitFeedback = (input: { message: string; pageUrl?: string | undefined }) =>
   api<{ feedback: { id: string; createdAt: string } }>('/feedback', {

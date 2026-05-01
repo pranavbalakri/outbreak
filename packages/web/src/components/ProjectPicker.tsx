@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import type { FolderDto, ProjectDto } from '@outbreak/shared';
+import type { FolderDto, ProjectDto } from '@breaklog/shared';
 
 export interface ProjectPickerProps {
   /** Selected project id, or null / empty for "no project". */

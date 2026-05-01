@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { TimeEntryDto } from '@outbreak/shared';
+import type { TimeEntryDto } from '@breaklog/shared';
 import {
   createTimeEntry,
   deleteTimeEntry,
@@ -11,7 +11,7 @@ import {
 } from '../api/queries.js';
 import { Badge, Button, Card, Field, Modal, inputClass } from '../components/ui.js';
 import { ProjectPicker } from '../components/ProjectPicker.js';
-import type { FolderDto, ProjectDto } from '@outbreak/shared';
+import type { FolderDto, ProjectDto } from '@breaklog/shared';
 import { addDays, formatMinutes, startOfIsoWeek, durationMinutes } from '../lib/format.js';
 import { ApiError } from '../api/client.js';
 

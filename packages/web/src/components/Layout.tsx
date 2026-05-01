@@ -16,9 +16,9 @@ const NAV = [
 function LogoMark() {
   return (
     <div className="flex items-center gap-2.5">
-      <img src="/outbreak-logo.png" alt="Outbreak" className="h-7 w-7" />
+      <img src="/breaklog-logo.png" alt="Breaklog" className="h-7 w-7" />
       <div className="flex items-baseline gap-2">
-        <span className="text-[15px] font-semibold tracking-tight">outbreak</span>
+        <span className="text-[15px] font-semibold tracking-tight">Breaklog</span>
         <span className="hidden text-xs text-ink-300 sm:inline">For Break Debate</span>
       </div>
     </div>

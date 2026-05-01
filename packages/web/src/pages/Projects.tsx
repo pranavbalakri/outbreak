@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { ProjectDto } from '@outbreak/shared';
+import type { ProjectDto } from '@breaklog/shared';
 import {
   createFolder,
   createProject,

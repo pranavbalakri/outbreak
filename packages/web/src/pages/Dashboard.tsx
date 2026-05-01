@@ -9,7 +9,7 @@ import {
   fetchUpcomingProjects,
 } from '../api/queries.js';
 import { ProjectPicker } from '../components/ProjectPicker.js';
-import type { TimeEntryDto } from '@outbreak/shared';
+import type { TimeEntryDto } from '@breaklog/shared';
 import { formatElapsed, useTimer } from '../hooks/useTimer.js';
 import { Badge, Button, Card, Field, Select, inputClass } from '../components/ui.js';
 import { useConfirm } from '../components/Confirm.js';
@@ -201,8 +201,8 @@ function EntryRow({
 }: {
   entry: TimeEntryDto;
   projectName: string | undefined;
-  assignedProjects: import('@outbreak/shared').ProjectDto[];
-  folders: import('@outbreak/shared').FolderDto[];
+  assignedProjects: import('@breaklog/shared').ProjectDto[];
+  folders: import('@breaklog/shared').FolderDto[];
   showUser: boolean;
   onChange: () => void;
 }) {

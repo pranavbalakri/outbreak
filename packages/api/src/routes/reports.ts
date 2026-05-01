@@ -9,7 +9,7 @@ import {
   type ReportProjectsResponse,
   type ReportSummaryResponse,
   type ReportSummaryRow,
-} from '@outbreak/shared';
+} from '@breaklog/shared';
 import { prisma } from '../db.js';
 import { requireAdmin } from '../lib/auth.js';
 import { renderReportPdf } from '../lib/reportPdf.js';
@@ -541,7 +541,7 @@ export async function registerReportRoutes(app: FastifyInstance): Promise<void> 
         );
       }
       const csv = lines.join('\n') + '\n';
-      const filename = `outbreak_${filters.from.slice(0, 10)}_${filters.to.slice(0, 10)}.csv`;
+      const filename = `breaklog_${filters.from.slice(0, 10)}_${filters.to.slice(0, 10)}.csv`;
       return reply
         .header('Content-Type', 'text/csv; charset=utf-8')
         .header('Content-Disposition', `attachment; filename="${filename}"`)
@@ -646,7 +646,7 @@ export async function registerReportRoutes(app: FastifyInstance): Promise<void> 
           : {}),
       });
 
-      const filename = `outbreak_${filters.from.slice(0, 10)}_${filters.to.slice(0, 10)}.pdf`;
+      const filename = `breaklog_${filters.from.slice(0, 10)}_${filters.to.slice(0, 10)}.pdf`;
       return reply
         .header('Content-Type', 'application/pdf')
         .header('Content-Disposition', `attachment; filename="${filename}"`)

@@ -1,4 +1,4 @@
-// Prisma schema for Outbreak.
+// Prisma schema for Breaklog.
 // Entities mirror §6 of spec.md; cross-cutting notes from plan.md:
 //   - Soft-delete (deleted_at) on every business entity.
 //   - Money stored as integer cents.

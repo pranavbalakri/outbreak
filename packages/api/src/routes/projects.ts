@@ -6,7 +6,7 @@ import {
   ProjectListFiltersSchema,
   UpcomingProjectFiltersSchema,
   UpdateProjectInputSchema,
-} from '@outbreak/shared';
+} from '@breaklog/shared';
 import { prisma } from '../db.js';
 import { authenticate } from '../lib/auth.js';
 import { toProjectDto } from '../lib/dto.js';

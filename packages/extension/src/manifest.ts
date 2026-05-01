@@ -6,12 +6,12 @@ const apiOrigin = process.env.VITE_API_ORIGIN ?? 'http://localhost:4000';
 
 export default defineManifest({
   manifest_version: 3,
-  name: 'Outbreak',
+  name: 'Breaklog',
   version: '0.1.0',
   description: 'Track debate-coaching research time without leaving your browser.',
   action: {
     default_popup: 'src/popup/index.html',
-    default_title: 'Outbreak',
+    default_title: 'Breaklog',
   },
   background: {
     service_worker: 'src/service-worker/index.ts',
@@ -28,7 +28,7 @@ export default defineManifest({
         default: 'Ctrl+Shift+O',
         mac: 'Command+Shift+O',
       },
-      description: 'Start or stop the Outbreak timer for the most recent project.',
+      description: 'Start or stop the Breaklog timer for the most recent project.',
     },
   },
   icons: {

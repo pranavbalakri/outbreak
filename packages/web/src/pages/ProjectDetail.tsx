@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import ReactMarkdown from 'react-markdown';
-import type { ProjectDto } from '@outbreak/shared';
+import type { ProjectDto } from '@breaklog/shared';
 import {
   addAssignee,
   addProjectTag,

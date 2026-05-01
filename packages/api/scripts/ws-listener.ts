@@ -10,7 +10,7 @@ if (!token) {
 
 const url = process.env['WS_URL'] ?? 'ws://localhost:4000/ws';
 const ws = new WebSocket(url, {
-  headers: { Cookie: `outbreak_session=${token}` },
+  headers: { Cookie: `breaklog_session=${token}` },
 });
 
 ws.on('open', () => console.error('[ws] open'));

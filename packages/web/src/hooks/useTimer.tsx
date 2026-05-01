@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import type { TimeEntryDto, TimerEvent } from '@outbreak/shared';
+import type { TimeEntryDto, TimerEvent } from '@breaklog/shared';
 import { fetchCurrentTimer, startTimer, stopTimer } from '../api/queries.js';
 import { wsUrl } from '../api/client.js';
 import { useAuth } from '../auth/AuthContext.js';

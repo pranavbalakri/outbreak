@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { FolderDto, ProjectDto } from '@outbreak/shared';
+import type { FolderDto, ProjectDto } from '@breaklog/shared';
 
 interface FolderNode {
   folder: FolderDto;

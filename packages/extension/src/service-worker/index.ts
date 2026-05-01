@@ -1,6 +1,6 @@
 /// <reference types="chrome" />
 
-// Outbreak service worker.
+// Breaklog service worker.
 // Responsibilities:
 //   - Poll /timer/current every ~10s and keep the toolbar badge honest.
 //   - Handle the toggle-timer keyboard command (Step 33).
@@ -8,10 +8,10 @@
 // MV3 service workers are ephemeral: never rely on in-memory state surviving a
 // wake. Persist to chrome.storage.local.
 
-import type { ProjectDto, TimeEntryDto } from '@outbreak/shared';
+import type { ProjectDto, TimeEntryDto } from '@breaklog/shared';
 import { API_ORIGIN } from '../lib/config.js';
 
-const TICK_ALARM = 'outbreak-tick';
+const TICK_ALARM = 'breaklog-tick';
 const TICK_PERIOD_MINUTES = 10 / 60; // every 10s
 
 const BADGE_COLOR_RUNNING = '#10b981'; // green
@@ -184,7 +184,7 @@ chrome.commands.onCommand.addListener(async (command) => {
     await chrome.notifications.create({
       type: 'basic',
       iconUrl: chrome.runtime.getURL('src/icons/icon48.png'),
-      title: 'Outbreak — timer started',
+      title: 'Breaklog — timer started',
       message: mruProjectId ? String(mruProjectName ?? 'Project') : 'General time',
     });
     await refreshBadge();

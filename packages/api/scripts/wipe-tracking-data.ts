@@ -3,7 +3,7 @@
 //
 // Usage (from repo root):
 //   DATABASE_URL='postgresql://…'  \
-//   pnpm --filter @outbreak/api exec tsx scripts/wipe-tracking-data.ts --yes
+//   pnpm --filter @breaklog/api exec tsx scripts/wipe-tracking-data.ts --yes
 //
 // Refuses to run without `--yes` so you can't fat-finger it into production.
 import { prisma } from '../src/db.js';
@@ -14,7 +14,7 @@ async function main() {
       'Refusing to run without --yes. This will permanently delete every project, task, assignment, and time entry.',
     );
     console.error(
-      'Re-run with: pnpm --filter @outbreak/api exec tsx scripts/wipe-tracking-data.ts --yes',
+      'Re-run with: pnpm --filter @breaklog/api exec tsx scripts/wipe-tracking-data.ts --yes',
     );
     process.exit(2);
   }

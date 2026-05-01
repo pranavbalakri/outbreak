@@ -1,7 +1,7 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { loadEnv } from '../env.js';
 
-const SESSION_COOKIE = 'outbreak_session';
+const SESSION_COOKIE = 'breaklog_session';
 const SESSION_TTL_SECONDS = 14 * 24 * 60 * 60; // 14 days
 
 export interface SessionPayload {

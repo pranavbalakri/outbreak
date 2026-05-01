@@ -1,6 +1,6 @@
 # Deployment
 
-This document describes how Outbreak is deployed. It is tool-agnostic where
+This document describes how Breaklog is deployed. It is tool-agnostic where
 possible — anywhere we reference Fly.io or Vercel, you can swap in Render,
 Railway, Cloudflare Pages, etc. without code changes.
 
@@ -9,10 +9,10 @@ Railway, Cloudflare Pages, etc. without code changes.
 - **API** (`packages/api`) — Fastify + Prisma, Docker image built from
   [`packages/api/Dockerfile`](packages/api/Dockerfile). Runs `prisma migrate
   deploy` on boot, then `node dist/server.js`.
-- **Web** (`packages/web`) — Vite static bundle. `pnpm --filter @outbreak/web
+- **Web** (`packages/web`) — Vite static bundle. `pnpm --filter @breaklog/web
   build` produces `packages/web/dist/`. Any static host works; a [`vercel.json`](packages/web/vercel.json)
   is provided for Vercel.
-- **Extension** (`packages/extension`) — `pnpm --filter @outbreak/extension
+- **Extension** (`packages/extension`) — `pnpm --filter @breaklog/extension
   build` emits `dist/extension.zip`. Upload to Chrome Web Store as
   **Unlisted**; share the install link with Vik.
 - **Database** — Managed Postgres. Fly Postgres, Neon, and Render all work.
@@ -44,7 +44,7 @@ fly secrets set \
   GOOGLE_CLIENT_SECRET=...
 fly deploy
 fly status
-curl https://api.outbreak.example/healthz   # → { ok: true }
+curl https://api.breaklog.example/healthz   # → { ok: true }
 ```
 
 The Dockerfile is a multi-stage build that installs dev deps to compile the
@@ -56,14 +56,14 @@ forward signals to Node.
 
 1. Import the GitHub repo as a Vercel project.
 2. Set the root to the repo root (Vercel will pick up `packages/web/vercel.json`).
-3. Set env `VITE_API_ORIGIN=https://api.outbreak.example` and optionally
+3. Set env `VITE_API_ORIGIN=https://api.breaklog.example` and optionally
    `VITE_SENTRY_DSN`.
 4. Assign the custom domain.
 
 ## Chrome extension
 
 ```bash
-pnpm --filter @outbreak/extension build
+pnpm --filter @breaklog/extension build
 # produces packages/extension/dist/extension.zip
 ```
 

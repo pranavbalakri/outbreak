@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { CreateTaskInputSchema, UpdateTaskInputSchema } from '@outbreak/shared';
+import { CreateTaskInputSchema, UpdateTaskInputSchema } from '@breaklog/shared';
 import { prisma } from '../db.js';
 import { authenticate } from '../lib/auth.js';
 import { toTaskDto } from '../lib/dto.js';

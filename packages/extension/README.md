@@ -1,4 +1,4 @@
-# Outbreak — Chrome extension
+# Breaklog — Chrome extension
 
 Manifest V3 extension that gives instructors a one-click timer next to the
 browser toolbar. Same backend as the web app, authenticated via a long-lived
@@ -17,7 +17,7 @@ bearer token minted after a normal Google sign-in.
 
 ```bash
 pnpm install
-pnpm --filter @outbreak/extension dev
+pnpm --filter @breaklog/extension dev
 ```
 
 `vite` writes an unpacked dev bundle to `dist/`. In Chrome:
@@ -29,8 +29,8 @@ pnpm --filter @outbreak/extension dev
 You'll also need the API and web app running locally:
 
 ```bash
-pnpm --filter @outbreak/api dev   # :4000
-pnpm --filter @outbreak/web dev   # :5173
+pnpm --filter @breaklog/api dev   # :4000
+pnpm --filter @breaklog/web dev   # :5173
 ```
 
 Set `VITE_API_ORIGIN` and `VITE_WEB_ORIGIN` if either runs on non-default ports.
@@ -63,7 +63,7 @@ Change the shortcut at `chrome://extensions/shortcuts`.
 ## Ship a release (Chrome Web Store, private listing)
 
 ```bash
-pnpm --filter @outbreak/extension build
+pnpm --filter @breaklog/extension build
 # → packages/extension/dist/extension.zip
 ```
 

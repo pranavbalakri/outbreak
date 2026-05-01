@@ -5,7 +5,7 @@ import {
   CreateManualTimeEntryInputSchema,
   TimeEntryListFiltersSchema,
   UpdateTimeEntryInputSchema,
-} from '@outbreak/shared';
+} from '@breaklog/shared';
 import { prisma } from '../db.js';
 import { authenticate } from '../lib/auth.js';
 import { toTimeEntryDto } from '../lib/dto.js';

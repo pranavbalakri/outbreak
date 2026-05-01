@@ -1,4 +1,4 @@
-// Copies the Outbreak logo into the three icon sizes Manifest V3 references.
+// Copies the Breaklog logo into the three icon sizes Manifest V3 references.
 // Chrome downscales a single source PNG to whatever size it needs, so we ship
 // the full-resolution logo for each slot — crisper than a hand-plotted bitmap.
 //
@@ -9,7 +9,7 @@ import { resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname ?? '.', '..');
 const iconsDir = resolve(root, 'src/icons');
-const source = resolve(root, '../web/public/outbreak-logo.png');
+const source = resolve(root, '../web/public/breaklog-logo.png');
 
 mkdirSync(iconsDir, { recursive: true });
 
