@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { formatElapsed, useTimer } from '../hooks/useTimer.js';
 import { fetchFolders, fetchProjects, updateTimeEntry } from '../api/queries.js';
 import { ProjectPicker } from './ProjectPicker.js';
+import { TaskPicker } from './TaskPicker.js';
 
 /**
  * Toggl-style top-bar timer. While idle, offers a description input, project
@@ -27,6 +28,7 @@ export function TopTimer() {
 
   const [draftDescription, setDraftDescription] = useState('');
   const [draftProjectId, setDraftProjectId] = useState<string>('');
+  const [draftTaskId, setDraftTaskId] = useState<string | null>(null);
   const [runningDescription, setRunningDescription] = useState('');
 
   useEffect(() => {
@@ -36,7 +38,11 @@ export function TopTimer() {
   const running = !!active;
 
   const patchActive = useMutation({
-    mutationFn: (patch: { projectId?: string | null; description?: string | null }) => {
+    mutationFn: (patch: {
+      projectId?: string | null;
+      taskId?: string | null;
+      description?: string | null;
+    }) => {
       if (!active) throw new Error('No active timer');
       return updateTimeEntry(active.id, patch);
     },
@@ -47,8 +53,19 @@ export function TopTimer() {
   });
 
   const onProjectChange = (next: string | null) => {
-    if (running) patchActive.mutate({ projectId: next });
-    else setDraftProjectId(next ?? '');
+    if (running) {
+      // Changing project clears the running task — taskId requires the new
+      // projectId, and the old task likely belongs to the old project.
+      patchActive.mutate({ projectId: next, taskId: null });
+    } else {
+      setDraftProjectId(next ?? '');
+      setDraftTaskId(null);
+    }
+  };
+
+  const onTaskChange = (next: string | null) => {
+    if (running) patchActive.mutate({ taskId: next });
+    else setDraftTaskId(next);
   };
 
   const commitDescription = () => {
@@ -63,13 +80,18 @@ export function TopTimer() {
       await stop();
       setDraftDescription('');
       setDraftProjectId('');
+      setDraftTaskId(null);
       return;
     }
     await start({
       projectId: draftProjectId || null,
+      taskId: draftProjectId ? draftTaskId : null,
       description: draftDescription.trim() || undefined,
     });
   };
+
+  const activeProjectId = running ? (active!.projectId ?? null) : (draftProjectId || null);
+  const activeTaskId = running ? (active!.taskId ?? null) : draftTaskId;
 
   return (
     <div className="flex items-center gap-2">
@@ -93,11 +115,21 @@ export function TopTimer() {
       <ProjectPicker
         ariaLabel="Project"
         triggerWidth={200}
-        value={running ? (active!.projectId ?? null) : (draftProjectId || null)}
+        value={activeProjectId}
         onChange={onProjectChange}
         folders={folders}
         projects={projects}
       />
+
+      {activeProjectId && (
+        <TaskPicker
+          ariaLabel="Task"
+          triggerWidth={180}
+          projectId={activeProjectId}
+          value={activeTaskId}
+          onChange={onTaskChange}
+        />
+      )}
 
       <div
         className={`ml-1 min-w-[72px] text-right font-mono tabular-nums text-[15px] ${

@@ -11,20 +11,110 @@ import {
 } from '../api/queries.js';
 import { Badge, Button, Card, Field, Modal, inputClass } from '../components/ui.js';
 import { ProjectPicker } from '../components/ProjectPicker.js';
+import { TaskPicker } from '../components/TaskPicker.js';
 import type { FolderDto, ProjectDto } from '@breaklog/shared';
 import { addDays, formatMinutes, startOfIsoWeek, durationMinutes } from '../lib/format.js';
 import { ApiError } from '../api/client.js';
 
 const UNASSIGNED = '__unassigned__';
 
+type View = 'day' | 'week' | 'month';
+
+interface Bucket {
+  start: Date;
+  /** Exclusive. */
+  end: Date;
+  label: string;
+  sublabel?: string;
+}
+
+function startOfDay(date: Date): Date {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function startOfMonth(date: Date): Date {
+  const d = new Date(date);
+  d.setDate(1);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function addMonths(date: Date, n: number): Date {
+  const d = new Date(date);
+  d.setMonth(d.getMonth() + n);
+  return d;
+}
+
+function defaultAnchor(view: View): Date {
+  const now = new Date();
+  if (view === 'day') return startOfDay(now);
+  if (view === 'month') return startOfMonth(now);
+  return startOfIsoWeek(now);
+}
+
+function rangeForView(view: View, anchor: Date): { from: Date; to: Date } {
+  if (view === 'day') return { from: anchor, to: addDays(anchor, 1) };
+  if (view === 'month') return { from: anchor, to: addMonths(anchor, 1) };
+  return { from: anchor, to: addDays(anchor, 7) };
+}
+
+function computeBuckets(view: View, anchor: Date): Bucket[] {
+  if (view === 'day') {
+    return [
+      {
+        start: anchor,
+        end: addDays(anchor, 1),
+        label: anchor.toLocaleDateString(undefined, { weekday: 'short' }),
+        sublabel: String(anchor.getDate()),
+      },
+    ];
+  }
+  if (view === 'week') {
+    return Array.from({ length: 7 }, (_, i) => {
+      const start = addDays(anchor, i);
+      return {
+        start,
+        end: addDays(start, 1),
+        label: start.toLocaleDateString(undefined, { weekday: 'short' }),
+        sublabel: String(start.getDate()),
+      };
+    });
+  }
+  // month: weekly columns covering the month (Mon–Sun blocks intersecting it).
+  const monthStart = anchor;
+  const monthEnd = addMonths(anchor, 1);
+  const buckets: Bucket[] = [];
+  let cursor = startOfIsoWeek(monthStart);
+  let i = 1;
+  while (cursor.getTime() < monthEnd.getTime()) {
+    const next = addDays(cursor, 7);
+    buckets.push({
+      start: cursor,
+      end: next,
+      label: `W${i++}`,
+      sublabel: cursor.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+    });
+    cursor = next;
+  }
+  return buckets;
+}
+
 export function TimesheetPage() {
   const queryClient = useQueryClient();
-  const [anchor, setAnchor] = useState(() => startOfIsoWeek(new Date()));
+  const [view, setView] = useState<View>('week');
+  const [anchor, setAnchor] = useState<Date>(() => defaultAnchor('week'));
   const [adding, setAdding] = useState(false);
   const [attachingId, setAttachingId] = useState<string | null>(null);
 
-  const from = anchor.toISOString();
-  const to = addDays(anchor, 7).toISOString();
+  const buckets = useMemo(() => computeBuckets(view, anchor), [view, anchor]);
+  const { from: rangeFrom, to: rangeTo } = useMemo(
+    () => rangeForView(view, anchor),
+    [view, anchor],
+  );
+  const from = rangeFrom.toISOString();
+  const to = rangeTo.toISOString();
 
   const { data: entryData, refetch } = useQuery({
     queryKey: ['time-entries', { from, to }],
@@ -44,25 +134,27 @@ export function TimesheetPage() {
     return m;
   }, [projectData]);
 
-  const days = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(anchor, i)), [anchor]);
-
-  // Group entries by projectId (or UNASSIGNED) and by day index.
+  // Group entries by projectId (or UNASSIGNED) into one slot per bucket.
   const grid = useMemo(() => {
     const groups = new Map<string, TimeEntryDto[][]>();
+    const empty = () => Array.from({ length: buckets.length }, () => [] as TimeEntryDto[]);
     for (const e of entryData?.entries ?? []) {
+      const t = new Date(e.startedAt).getTime();
+      const idx = buckets.findIndex(
+        (b) => t >= b.start.getTime() && t < b.end.getTime(),
+      );
+      if (idx < 0) continue;
       const key = e.projectId ?? UNASSIGNED;
-      if (!groups.has(key)) groups.set(key, Array.from({ length: 7 }, () => []));
-      const day = new Date(e.startedAt);
-      const idx = Math.floor((day.getTime() - anchor.getTime()) / 86_400_000);
-      if (idx >= 0 && idx < 7) groups.get(key)![idx]!.push(e);
+      if (!groups.has(key)) groups.set(key, empty());
+      groups.get(key)![idx]!.push(e);
     }
     return groups;
-  }, [entryData, anchor]);
+  }, [entryData, buckets]);
 
   const hasUnassigned = (grid.get(UNASSIGNED)?.some((arr) => arr.length > 0)) ?? false;
   const projectKeys = Array.from(grid.keys()).filter((k) => k !== UNASSIGNED);
 
-  const totalForDay = (idx: number) => {
+  const totalForBucket = (idx: number) => {
     let total = 0;
     for (const rows of grid.values()) {
       for (const e of rows[idx] ?? []) total += durationMinutes(e.startedAt, e.endedAt);
@@ -70,23 +162,62 @@ export function TimesheetPage() {
     return total;
   };
 
+  const goPrev = () => {
+    if (view === 'day') setAnchor((a) => addDays(a, -1));
+    else if (view === 'month') setAnchor((a) => addMonths(a, -1));
+    else setAnchor((a) => addDays(a, -7));
+  };
+  const goNext = () => {
+    if (view === 'day') setAnchor((a) => addDays(a, 1));
+    else if (view === 'month') setAnchor((a) => addMonths(a, 1));
+    else setAnchor((a) => addDays(a, 7));
+  };
+  const goToday = () => setAnchor(defaultAnchor(view));
+
+  const switchView = (next: View) => {
+    setView(next);
+    setAnchor(defaultAnchor(next));
+  };
+
+  const rangeLabel = (() => {
+    if (view === 'day') {
+      return anchor.toLocaleDateString(undefined, {
+        weekday: 'long',
+        month: 'short',
+        day: 'numeric',
+      });
+    }
+    if (view === 'month') {
+      return anchor.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+    }
+    const end = addDays(anchor, 6);
+    const fmt = (d: Date) => d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    return `${fmt(anchor)} – ${fmt(end)}`;
+  })();
+
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ['time-entries'] });
     void refetch();
   };
+
+  const todayLabel = view === 'day' ? 'Today' : view === 'month' ? 'This month' : 'This week';
+  const emptyLabel =
+    view === 'day' ? 'No entries this day.' : view === 'month' ? 'No entries this month.' : 'No entries this week.';
+  const totalsRowLabel = view === 'month' ? 'Weekly total' : 'Daily total';
 
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Timesheet</h1>
         <div className="flex items-center gap-2">
-          <Button variant="secondary" onClick={() => setAnchor((a) => addDays(a, -7))}>
+          <ViewToggle view={view} onChange={switchView} />
+          <Button variant="secondary" onClick={goPrev}>
             ← Prev
           </Button>
-          <Button variant="secondary" onClick={() => setAnchor(startOfIsoWeek(new Date()))}>
-            This week
+          <Button variant="secondary" onClick={goToday}>
+            {todayLabel}
           </Button>
-          <Button variant="secondary" onClick={() => setAnchor((a) => addDays(a, 7))}>
+          <Button variant="secondary" onClick={goNext}>
             Next →
           </Button>
           <Button onClick={() => setAdding(true)}>+ Add time</Button>
@@ -94,14 +225,7 @@ export function TimesheetPage() {
       </div>
 
       <div className="mb-2 text-sm text-ink-200">
-        Week of{' '}
-        <span className="font-medium text-ink-100">
-          {anchor.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-        </span>{' '}
-        –{' '}
-        <span className="font-medium text-ink-100">
-          {addDays(anchor, 6).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-        </span>
+        <span className="font-medium text-ink-100">{rangeLabel}</span>
       </div>
 
       <Card className="overflow-hidden">
@@ -109,10 +233,10 @@ export function TimesheetPage() {
           <thead>
             <tr className="border-b border-ink-400 bg-ink-900 text-xs uppercase tracking-wide text-ink-200">
               <th className="w-64 px-4 py-2 text-left font-semibold">Project</th>
-              {days.map((d, i) => (
+              {buckets.map((b, i) => (
                 <th key={i} className="px-2 py-2 text-center font-semibold">
-                  <div>{d.toLocaleDateString(undefined, { weekday: 'short' })}</div>
-                  <div className="font-normal text-ink-300">{d.getDate()}</div>
+                  <div>{b.label}</div>
+                  {b.sublabel && <div className="font-normal text-ink-300">{b.sublabel}</div>}
                 </th>
               ))}
               <th className="w-20 px-2 py-2 text-right font-semibold">Total</th>
@@ -124,6 +248,7 @@ export function TimesheetPage() {
                 entries={grid.get(UNASSIGNED) ?? []}
                 onAttach={setAttachingId}
                 invalidate={invalidate}
+                interactive={view !== 'month'}
               />
             )}
             {projectKeys.map((pid) => (
@@ -133,25 +258,29 @@ export function TimesheetPage() {
                 entries={grid.get(pid) ?? []}
                 onMove={setAttachingId}
                 invalidate={invalidate}
+                interactive={view !== 'month'}
               />
             ))}
             {projectKeys.length === 0 && !hasUnassigned && (
               <tr>
-                <td colSpan={9} className="px-4 py-8 text-center text-sm text-ink-300">
-                  No entries this week.
+                <td
+                  colSpan={buckets.length + 2}
+                  className="px-4 py-8 text-center text-sm text-ink-300"
+                >
+                  {emptyLabel}
                 </td>
               </tr>
             )}
             <tr className="border-t border-ink-400 bg-ink-900 text-xs uppercase tracking-wide text-ink-200">
-              <td className="px-4 py-2 font-semibold">Daily total</td>
-              {days.map((_, i) => (
+              <td className="px-4 py-2 font-semibold">{totalsRowLabel}</td>
+              {buckets.map((_, i) => (
                 <td key={i} className="px-2 py-2 text-center font-mono tabular-nums">
-                  {formatMinutes(totalForDay(i))}
+                  {formatMinutes(totalForBucket(i))}
                 </td>
               ))}
               <td className="px-2 py-2 text-right font-mono tabular-nums">
                 {formatMinutes(
-                  Array.from({ length: 7 }, (_, i) => totalForDay(i)).reduce((a, b) => a + b, 0),
+                  buckets.map((_, i) => totalForBucket(i)).reduce((a, b) => a + b, 0),
                 )}
               </td>
             </tr>
@@ -191,10 +320,12 @@ function UnassignedRow({
   entries,
   onAttach,
   invalidate,
+  interactive,
 }: {
   entries: TimeEntryDto[][];
   onAttach: (id: string) => void;
   invalidate: () => void;
+  interactive: boolean;
 }) {
   const totalRow = entries
     .flat()
@@ -204,20 +335,24 @@ function UnassignedRow({
       <td className="px-4 py-3">
         <div className="flex items-center gap-2">
           <Badge tone="yellow">Unassigned</Badge>
-          <span className="text-xs text-ink-300">
-            expand a cell to attach
-          </span>
+          {interactive && (
+            <span className="text-xs text-ink-300">expand a cell to attach</span>
+          )}
         </div>
       </td>
-      {entries.map((dayEntries, i) => (
-        <DayCell
-          key={i}
-          entries={dayEntries}
-          onAttach={onAttach}
-          attachLabel="attach"
-          invalidate={invalidate}
-        />
-      ))}
+      {entries.map((bucketEntries, i) =>
+        interactive ? (
+          <DayCell
+            key={i}
+            entries={bucketEntries}
+            onAttach={onAttach}
+            attachLabel="attach"
+            invalidate={invalidate}
+          />
+        ) : (
+          <TotalCell key={i} entries={bucketEntries} />
+        ),
+      )}
       <td className="px-2 text-right font-mono tabular-nums">{formatMinutes(totalRow)}</td>
     </tr>
   );
@@ -228,11 +363,13 @@ function ProjectRow({
   entries,
   onMove,
   invalidate,
+  interactive,
 }: {
   name: string;
   entries: TimeEntryDto[][];
   onMove: (id: string) => void;
   invalidate: () => void;
+  interactive: boolean;
 }) {
   const totalRow = entries
     .flat()
@@ -240,17 +377,69 @@ function ProjectRow({
   return (
     <tr className="border-b border-ink-500">
       <td className="px-4 py-3 font-medium">{name}</td>
-      {entries.map((dayEntries, i) => (
-        <DayCell
-          key={i}
-          entries={dayEntries}
-          onAttach={onMove}
-          attachLabel="move"
-          invalidate={invalidate}
-        />
-      ))}
+      {entries.map((bucketEntries, i) =>
+        interactive ? (
+          <DayCell
+            key={i}
+            entries={bucketEntries}
+            onAttach={onMove}
+            attachLabel="move"
+            invalidate={invalidate}
+          />
+        ) : (
+          <TotalCell key={i} entries={bucketEntries} />
+        ),
+      )}
       <td className="px-2 text-right font-mono tabular-nums">{formatMinutes(totalRow)}</td>
     </tr>
+  );
+}
+
+function TotalCell({ entries }: { entries: TimeEntryDto[] }) {
+  const total = entries.reduce(
+    (s, e) => s + durationMinutes(e.startedAt, e.endedAt),
+    0,
+  );
+  return (
+    <td
+      className={`px-2 py-3 text-center font-mono text-sm tabular-nums ${
+        total > 0 ? 'text-ink-100' : 'text-ink-300'
+      }`}
+    >
+      {total > 0 ? formatMinutes(total) : '—'}
+    </td>
+  );
+}
+
+function ViewToggle({
+  view,
+  onChange,
+}: {
+  view: View;
+  onChange: (next: View) => void;
+}) {
+  const opts: { value: View; label: string }[] = [
+    { value: 'day', label: 'Day' },
+    { value: 'week', label: 'Week' },
+    { value: 'month', label: 'Month' },
+  ];
+  return (
+    <div className="inline-flex overflow-hidden rounded-md border border-ink-400 bg-ink-800 text-sm">
+      {opts.map((o) => (
+        <button
+          key={o.value}
+          type="button"
+          onClick={() => onChange(o.value)}
+          className={`px-3 py-1.5 transition-colors ${
+            view === o.value
+              ? 'bg-ink-700 text-ink-100'
+              : 'text-ink-200 hover:bg-ink-700 hover:text-ink-100'
+          }`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -336,6 +525,7 @@ function AddTimeModal({
 }) {
   const today = new Date().toISOString().slice(0, 10);
   const [projectId, setProjectId] = useState('');
+  const [taskId, setTaskId] = useState<string | null>(null);
   const [date, setDate] = useState(today);
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('10:00');
@@ -346,6 +536,7 @@ function AddTimeModal({
     mutationFn: () =>
       createTimeEntry({
         projectId: projectId || null,
+        taskId: projectId ? taskId : null,
         startedAt: new Date(`${date}T${startTime}`).toISOString(),
         endedAt: new Date(`${date}T${endTime}`).toISOString(),
         description: description || undefined,
@@ -360,11 +551,23 @@ function AddTimeModal({
         <Field label="Project">
           <ProjectPicker
             value={projectId || null}
-            onChange={(v) => setProjectId(v ?? '')}
+            onChange={(v) => {
+              setProjectId(v ?? '');
+              setTaskId(null);
+            }}
             folders={folders}
             projects={projects}
           />
         </Field>
+        {projectId && (
+          <Field label="Task">
+            <TaskPicker
+              projectId={projectId}
+              value={taskId}
+              onChange={setTaskId}
+            />
+          </Field>
+        )}
         <div className="grid grid-cols-3 gap-3">
           <Field label="Date">
             <input
@@ -441,11 +644,18 @@ function AttachModal({
   // Start with the current project (or empty for unassigned entries) so the
   // dropdown reflects the current state rather than asking you to re-pick.
   const [projectId, setProjectId] = useState<string>(entry?.projectId ?? '');
+  const [taskId, setTaskId] = useState<string | null>(entry?.taskId ?? null);
   const mutation = useMutation({
     mutationFn: () =>
-      updateTimeEntry(entryId, { projectId: projectId ? projectId : null }),
+      updateTimeEntry(entryId, {
+        projectId: projectId ? projectId : null,
+        taskId: projectId ? taskId : null,
+      }),
     onSuccess: onAttached,
   });
+  const unchanged =
+    (entry?.projectId ?? '') === projectId &&
+    (entry?.taskId ?? null) === (projectId ? taskId : null);
   return (
     <Modal
       open
@@ -456,20 +666,30 @@ function AttachModal({
         <Field label="Project">
           <ProjectPicker
             value={projectId || null}
-            onChange={(v) => setProjectId(v ?? '')}
+            onChange={(v) => {
+              setProjectId(v ?? '');
+              setTaskId(null);
+            }}
             folders={folders}
             projects={projects}
           />
         </Field>
+        {projectId && (
+          <Field label="Task">
+            <TaskPicker
+              projectId={projectId}
+              value={taskId}
+              onChange={setTaskId}
+            />
+          </Field>
+        )}
         <div className="flex justify-end gap-2">
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
           <Button
             onClick={() => mutation.mutate()}
-            disabled={
-              mutation.isPending || (entry?.projectId ?? '') === projectId
-            }
+            disabled={mutation.isPending || unchanged}
           >
             {isReassign ? 'Save' : 'Attach'}
           </Button>

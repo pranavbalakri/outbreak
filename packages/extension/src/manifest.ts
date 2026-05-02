@@ -4,6 +4,14 @@ import { defineManifest } from '@crxjs/vite-plugin';
 // dev, staging, and prod builds each target their own origin and nothing more.
 const apiOrigin = process.env.VITE_API_ORIGIN ?? 'http://localhost:4000';
 
+// Match the same guard in src/lib/config.ts: a production build must not
+// silently bake localhost into the manifest's host_permissions.
+if (process.env.NODE_ENV === 'production' && apiOrigin.startsWith('http://localhost')) {
+  throw new Error(
+    'VITE_API_ORIGIN must be set to a non-localhost URL for production builds.',
+  );
+}
+
 export default defineManifest({
   manifest_version: 3,
   name: 'Breaklog',
